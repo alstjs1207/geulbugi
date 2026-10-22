@@ -27,6 +27,6 @@ blog.naver.com의 공개 글과 작성 화면을 읽고 선택한 본문에 네�
 개발자 본인이 공개 운영 방침과 일치함을 확인한 뒤 대시보드의 해당 확인란에 체크합니다.
 
 개인정보처리방침 URL
-https://blog-editor-privacy-yuminseon.yu-lotti.chatgpt.site/privacy
-2026-10-21 공개 전환 및 비로그인 본문 접근 확인 완료. 위 최종 URL을 입력하세요.
+https://geulbugi.vercel.app/privacy/
+2026-10-22 글부기 소개 사이트로 통합. 비로그인 접근과 확장 내 처리방침 본문 일치 확인 완료. 위 최종 URL을 입력하세요.
 확장 프로그램의 심사 제출·출시는 사용자 지시에 따라 계속 보류합니다.
