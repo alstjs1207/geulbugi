@@ -1,0 +1,76 @@
+{
+  "capturedAt": "2026-10-22",
+  "productVersion": "0.1.29",
+  "sourceProject": "/Users/msyu/study/naver-blog-editor-extension",
+  "sourceUrl": "http://127.0.0.1:5178/",
+  "method": "Ego Browser PNG screenshot; native UI buttons used; CSS-pixel clip of existing workspace or modal. No generated UI, no content substitution.",
+  "scope": "Running local example document, not a live Naver editor or personal draft.",
+  "assets": [
+    {
+      "file": "assets/screenshots/format-detail.png",
+      "width": 351,
+      "height": 162,
+      "sha256": "692f248e30c2226141b58737fe00dac34a78df221f5be04a63a4ea68953b97e7"
+    },
+    {
+      "file": "assets/screenshots/format.png",
+      "width": 1372,
+      "height": 792,
+      "sha256": "1d7b8c1b6012aaf7b57cae3e24150726545625d34ea4af594b6733f0f1e424df"
+    },
+    {
+      "file": "assets/screenshots/linebreak-detail.png",
+      "width": 938,
+      "height": 319,
+      "sha256": "3f2e5b51397d9589f2a75ebc41d171e8e929b0ab1813a8cb940f393c7ef0bb39"
+    },
+    {
+      "file": "assets/screenshots/linebreak.png",
+      "width": 940,
+      "height": 746,
+      "sha256": "b4bb6980f0b12d1e888237e3cee82602d993637b9b9c56d4fcb556dc226b5a7a"
+    },
+    {
+      "file": "assets/screenshots/links-detail.png",
+      "width": 402,
+      "height": 340,
+      "sha256": "8fee28ba1faabd1e9aee0d74aa14af0aaefa6fa9c005c5de995b9c17af6d1cad"
+    },
+    {
+      "file": "assets/screenshots/links.png",
+      "width": 1372,
+      "height": 792,
+      "sha256": "ced98fece11574796b3c76a515dd7098d5bf5518f911774e9ddd97f79e155b5e"
+    },
+    {
+      "file": "assets/screenshots/photos.png",
+      "width": 1372,
+      "height": 792,
+      "sha256": "1be563b43b16ff891e257056fbe2a0cbbf80b917734b27a8357bc1eeffd5f22d"
+    },
+    {
+      "file": "assets/screenshots/quote-detail.png",
+      "width": 323,
+      "height": 162,
+      "sha256": "509b2659e8ce980b6425ae559e50c1854f7a1c6c7a826a84d8fd42b0f17fcf1d"
+    },
+    {
+      "file": "assets/screenshots/quote.png",
+      "width": 1372,
+      "height": 792,
+      "sha256": "fecd1186c71804cbd30efd2c279c59c1f810a57a83bb28ea286d3489c00a7b7a"
+    },
+    {
+      "file": "assets/screenshots/schedule.png",
+      "width": 1372,
+      "height": 792,
+      "sha256": "79d9310b0980af1edd9e0aee3860fa8d27a997ee7114cc8627d29a31195def78"
+    },
+    {
+      "file": "assets/screenshots/shortcuts.png",
+      "width": 940,
+      "height": 717,
+      "sha256": "cd6b25a444d0c6073b1790c86c6659bb30801a5f04f97489d1efad64fb9855b7"
+    }
+  ]
+}
