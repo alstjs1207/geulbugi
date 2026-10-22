@@ -1,0 +1,11 @@
+{
+  "scenario": "모의 편집기: 일시 연결 끊김 → 연결 다시 확인",
+  "before": {
+    "recovery": true,
+    "reloaded": 0
+  },
+  "after": {
+    "recovery": false,
+    "reloaded": 0
+  }
+}

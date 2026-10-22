@@ -1,0 +1,10 @@
+import { execFileSync } from 'node:child_process';
+import { mkdir,rename,readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
+await mkdir('artifacts',{recursive:true});
+const manifest=JSON.parse(await readFile('dist/manifest.json','utf8'));
+const temporary=resolve('artifacts',randomUUID()+'.zip'),destination=resolve('artifacts',`geulbugi-${manifest.version}.zip`);
+execFileSync('zip',['-q','-r',temporary,'.','-x','*.DS_Store'],{cwd:'dist',stdio:'inherit'});
+await rename(temporary,destination);
+console.log('Created '+destination);

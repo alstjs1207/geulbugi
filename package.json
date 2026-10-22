@@ -1,0 +1,37 @@
+{
+  "name": "geulbugi",
+  "version": "0.1.29",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5178",
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "tsc --noEmit",
+    "package": "node scripts/package.mjs",
+    "verify": "node scripts/verify-package.mjs",
+    "release": "npm run check && npm test && npm run build && npm run verify && npm run package",
+    "store:verify": "node scripts/verify-store.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^1.52.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.4",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "esbuild": "^0.28.2",
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  }
+}

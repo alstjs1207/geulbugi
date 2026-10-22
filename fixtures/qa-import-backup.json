@@ -1,0 +1,15 @@
+{
+  "format": "naver-blog-helper",
+  "version": 1,
+  "exportedAt": "2026-10-13T00:00:00Z",
+  "presets": [
+    {
+      "id": "qa-backup-import-20261013",
+      "name": "전체 검수 백업 프리셋",
+      "description": "가져오기 검수",
+      "format": {
+        "bold": true
+      }
+    }
+  ]
+}

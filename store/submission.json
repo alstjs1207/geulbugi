@@ -1,0 +1,50 @@
+{
+  "name": "글부기",
+  "version": "0.1.29",
+  "language": "ko",
+  "pricePlan": "free",
+  "primaryCategory": "Productivity / Workflow & Planning (생산성 / 워크플로 및 계획)",
+  "publisherName": "유민선",
+  "supportEmail": "alstjs1207@naver.com",
+  "homepageUrl": null,
+  "privacyPolicyUrl": "https://blog-editor-privacy-yuminseon.yu-lotti.chatgpt.site/privacy",
+  "distribution": "public-proposed",
+  "reviewPublishing": "not submitted; manual publication only after explicit authorization",
+  "accountStatus": "developer dashboard accessible; draft saved 2026-10-22",
+  "assets": {
+    "icon": "images/icon-128.png",
+    "smallPromo": "images/promo-440x280.png",
+    "screenshots": [
+      "images/01-format-1280x800.png",
+      "images/02-quote-1280x800.png",
+      "images/03-linebreak-1280x800.png",
+      "images/04-photos-1280x800.png",
+      "images/05-schedule-1280x800.png"
+    ]
+  },
+  "sources": [
+    "https://developer.chrome.com/docs/webstore/images",
+    "https://developer.chrome.com/docs/webstore/cws-dashboard-listing",
+    "https://developer.chrome.com/docs/webstore/cws-dashboard-privacy",
+    "https://developer.chrome.com/docs/webstore/program-policies/user-data-faq",
+    "https://developer.chrome.com/docs/webstore/publish",
+    "https://developer.chrome.com/docs/extensions/reference/api/tabs"
+  ],
+  "privacyPolicyAccess": "public",
+  "privacySiteId": "appgprj_6ad5f40c23d881918e0158d11893d319",
+  "privacyPolicyDecision": "public policy authorized by user 2026-10-21",
+  "storeSubmissionStatus": "draft completed; not submitted per user instruction 2026-10-22",
+  "brandSource": "design/brand/geulbugi-original.png",
+  "subtitle": "블로그 편집 도우미",
+  "traderStatus": "non-trader (user reported 2026-10-21)",
+  "itemId": "gmcaompgkpccmnpcbngeoabbfkgcoabg",
+  "dashboardUrl": "https://chrome.google.com/webstore/devconsole/07e6aca3-f4d9-4157-8f5f-2dd40b612966/gmcaompgkpccmnpcbngeoabbfkgcoabg/edit/listing",
+  "draftCompletedAt": "2026-10-22",
+  "dataDisclosures": [
+    "personally_identifiable_information",
+    "web_history",
+    "website_content"
+  ],
+  "dashboardAssets": 7,
+  "reviewerInstructionsSaved": true
+}

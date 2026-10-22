@@ -1,0 +1,27 @@
+{
+  "width": 360,
+  "height": 500,
+  "footer": {
+    "top": 343.40625,
+    "bottom": 500
+  },
+  "bannerVisible": true,
+  "blocked": true,
+  "buttons": [
+    {
+      "text": "선택 영역에 적용",
+      "visible": true,
+      "unobstructed": true
+    },
+    {
+      "text": "되돌리기",
+      "visible": true,
+      "unobstructed": true
+    },
+    {
+      "text": "연결·복구 도움말",
+      "visible": true,
+      "unobstructed": true
+    }
+  ]
+}

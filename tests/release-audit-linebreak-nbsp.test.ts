@@ -1,0 +1,21 @@
+import {it,expect} from 'vitest';
+import {DemoEditor} from '../src/platform/demo';
+import {buildBreakPlan} from '../src/core/linebreak';
+import {defaultDatabase} from '../src/core/defaults';
+import {verifyPostconditions} from '../src/editor/postconditions';
+it('audit: accepts native NBSP normalization after correct line breaks',()=>{
+ const before=new DemoEditor().snapshot();
+ const text='출시 검수 첫 문장입니다. 둘째 문장도 그대로 보존합니다.';
+ before.blocks=[{id:'p',kind:'paragraph',text,runs:[{text,marks:{}}],align:'left'}];
+ before.selection={blockId:'p',endBlockId:'p',start:0,end:text.length,text,signature:'x',valid:true,collapsed:false};
+ const plan=buildBreakPlan(before,{...defaultDatabase().settings.rules,longLength:48});
+ const after=structuredClone(before);after.blocks[0].runs=structuredClone(plan.changes[0].after);after.blocks[0].text=after.blocks[0].runs.map(r=>r.text).join('');
+ expect(()=>verifyPostconditions(before,after,{type:'linebreak',plan})).not.toThrow();
+ const wrong=structuredClone(after);wrong.blocks[0].runs=wrong.blocks[0].runs.map(r=>({...r,text:r.text.replace(/\n\n/g,'\n')}));
+ expect(()=>verifyPostconditions(before,wrong,{type:'linebreak',plan})).toThrow(/줄바꿈/);
+ const missing=structuredClone(after);missing.blocks[0].runs[0].text=missing.blocks[0].runs[0].text.replace('출시','');
+ expect(()=>verifyPostconditions(before,missing,{type:'linebreak',plan})).toThrow(/보존/);
+ after.blocks[0].runs=after.blocks[0].runs.map(r=>({...r,text:r.text.replace(/ /g,'\u00a0')}));
+ after.blocks[0].text=after.blocks[0].runs.map(r=>r.text).join('');
+ expect(()=>verifyPostconditions(before,after,{type:'linebreak',plan})).not.toThrow();
+});

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>글부기 · 작은 프로모션 타일</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:440px;height:280px;overflow:hidden}
+body{background:#fdfbf3;color:#163c2a;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;-webkit-font-smoothing:antialiased}
+main{position:relative;width:440px;height:280px;padding:23px 26px}
+.eyebrow{margin:0;font-size:13px;font-weight:650;letter-spacing:-.2px;color:#43624e}
+h1{position:relative;margin:8px 0 0;font-size:62px;font-weight:900;line-height:1.08;letter-spacing:-3.8px;color:#107343}
+.mascot{position:absolute;right:26px;top:19px;width:124px;height:124px;object-fit:contain}
+.tagline{margin:13px 0 0;font-size:18px;font-weight:750;line-height:1.3;letter-spacing:-.7px}
+.features{position:absolute;left:20px;right:20px;bottom:20px;height:98px;padding:17px 18px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;column-gap:18px;row-gap:13px;background:#145638;border-radius:17px;color:#fff}
+.feature{display:flex;align-items:center;gap:9px;white-space:nowrap;font-size:16px;font-weight:700;letter-spacing:-.35px;line-height:1.2}
+.feature svg{width:20px;height:20px;flex:none;fill:none;stroke:#cdeba2;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<main>
+ <p class="eyebrow">블로그 편집 도우미</p>
+ <h1>글부기</h1>
+ <img class="mascot" src="icon-128.png" alt="글부기 캐릭터">
+ <p class="tagline">네이버 블로그 편집, 더 간편하게</p>
+ <div class="features">
+  <div class="feature"><svg viewBox="0 0 24 24"><path d="M4 5h16M12 5v14M8 19h8"/></svg><span>서식 · 인용구</span></div>
+  <div class="feature"><svg viewBox="0 0 24 24"><path d="m10 13 4-4m-6 7-1 1a4.2 4.2 0 0 1-6-6l4-4a4.2 4.2 0 0 1 6 0m2 1 1-1a4.2 4.2 0 0 1 6 6l-4 4a4.2 4.2 0 0 1-6 0" transform="translate(1 0)"/></svg><span>내 글 링크</span></div>
+  <div class="feature"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="1.5"/><path d="m5 18 5-5 3 3 3-4 3 6"/></svg><span>사진 · 줄바꿈</span></div>
+  <div class="feature"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>예약 시간</span></div>
+ </div>
+</main>
+</html>

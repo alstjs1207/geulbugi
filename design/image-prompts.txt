@@ -1,0 +1,128 @@
+Built-in image_gen tool used for four ui-mockup concept images.
+
+IMAGE 01
+Use case: ui-mockup
+Asset type: detailed Korean desktop Chrome-extension UI design mockup, development-before-review deliverable.
+Style: realistic, polished, implementable Figma-style product UI, flat front-on screenshot, crisp Korean typography like Pretendard or Noto Sans KR, exceptional text legibility. Restrained productivity-tool aesthetics. Light theme; white surfaces, #F5F7F6 canvas, #202824 primary ink, #66716B muted text, #139B64 primary green, #EAF7F0 selected/tinted surfaces, #E2E8E4 hairline dividers, #FFF7E8 amber notices. 8px spacing system, 10px card corners, 8px input corners, subtle shadows. Thin outline utility icons; no sparkles, AI motifs, characters, marketing hero, oversized decorations, dark mode, gradients, perspective, monitor device, or photographic backdrop.
+Product working title (verbatim): "블로그 편집 도우미". Four tabs in exactly this order (verbatim): "서식", "내 글", "사진", "줄바꿈".
+Chrome desktop extension alongside the Naver SmartEditor ONE, existing Naver login/upload/draft/publish only. All extension processing and records local, no AI API, server, extension sign-up, subscriptions, or auto-publish. Do NOT invent a publish button inside the extension. Main edit action is always an explicit user button. These are concept mockups, NOT proof of editor integration.
+Every artboard uses the small top-right badge "개발 전 시안". All important UI strings must be legible correct Korean; prefer modest amounts of accurate real text over tiny illegible filler. Do not put source code, APIs, technical diagnostics or developer notes inside consumer controls.
+Primary request: Image 01, the overall real-world layout showing a writing canvas next to a right-hand extension side panel in formatting mode. Landscape 16:10, high-resolution approximately 2560x1600; generous outer margin and practical screenshot composition.
+At the very top of the board place "01  전체 화면 디자인" and a small subtitle "네이버 글쓰기 + 오른쪽 보조 패널".
+Below fill most of the artboard with a coherent Chrome browser window. Browser tab: "네이버 블로그 · 글쓰기". URL display "blog.naver.com". Minimal macOS-style Chrome chrome. Existing Naver content occupies about 70% of window and extension 30%; side panel conceptual width 400 CSS px, editor at least 850 CSS px. Slim divider and resize affordance.
+Naver mock editor top: wordmark text "NAVER 블로그", existing native buttons "임시저장" and "발행" in Naver area only. Under that, a modest real-looking content toolbar with text, photo, link, formatting icons. Centered white document on light gray editor background.
+Document title: "아이와 함께한 가을 숲 산책". Article body: "주말에는 아이와 함께 숲길을 걸었어요." then a realistic autumn forest photo, small caption "가을 햇살이 내려앉은 숲길". Below photo show a heading selected with pale green text-range highlight, exact heading "가볍게 걷기 좋은 코스". Next paragraph "길이 완만해서 아이와 천천히 걷기 좋았어요." then another short paragraph "중간에 쉬어 갈 벤치도 있어 편하게 다녀왔어요." Main canvas text remains comfortable to read. Selection is visually clear and limited to the heading text, not the whole article.
+Right panel header: small green outline pen square icon, "블로그 편집 도우미", settings gear icon. Status line: small green dot plus "현재 글". Selection context card: "기억한 선택 영역", subtitle "3번 문단 · 가볍게 걷기 좋은 코스", with small quiet text action "본문에서 확인".
+Tabs "서식", "내 글", "사진", "줄바꿈", active 서식 with green underline.
+Panel content title "자주 쓰는 서식". Three stacked or compact preset cards named "본문", "소제목", "강조", each with a short preview line; "소제목" chosen with green outline and check. Add a small "+ 프리셋 추가" text action.
+Below selected preset show "소제목" and "수정", a crisp two-column property summary: "글자 크기" → "19", "글자색" → black swatch, "굵게" → selected B, "배경색" → "유지", "문단 정렬" → left-align icon, "문단 스타일" → "유지". Very clear small instruction "지정하지 않은 속성은 유지해요."
+A distinct preview box "미리보기" shows the exact selected heading in bold at slightly larger font "가볍게 걷기 좋은 코스".
+Pinned bottom action area: scope text "선택한 글자와 해당 문단에 적용", broad green button "선택 영역에 적용", quiet "되돌리기" disabled-looking until applicable. Bottom tiny local-storage line "설정과 내 글은 이 PC에 저장".
+Outside browser at board bottom, three concise annotation captions aligned left to right: "선택 위치를 기억", "프리셋으로 한 번에", "확인 후 직접 적용". Keep focus on actual detailed UI, no fake dashboards.
+Constraints: precise selected context matches canvas heading; native publish belongs only to Naver; no "연동 검증 완료" or "저장 보장" labels. This is a design image.
+
+IMAGE 02
+Use case: ui-mockup
+Asset type: detailed Korean desktop Chrome-extension UI design mockup, development-before-review deliverable.
+Style: realistic, polished, implementable Figma-style product UI, flat front-on screenshot, crisp Korean typography like Pretendard or Noto Sans KR, exceptional text legibility. Restrained productivity-tool aesthetics. Light theme; white surfaces, #F5F7F6 canvas, #202824 primary ink, #66716B muted text, #139B64 primary green, #EAF7F0 selected/tinted surfaces, #E2E8E4 hairline dividers, #FFF7E8 amber notices. 8px spacing system, 10px card corners, 8px input corners, subtle shadows. Thin outline utility icons; no sparkles, AI motifs, characters, marketing hero, oversized decorations, dark mode, gradients, perspective, monitor device, or photographic backdrop.
+Product working title (verbatim): "블로그 편집 도우미". Four tabs in exactly this order (verbatim): "서식", "내 글", "사진", "줄바꿈".
+Chrome desktop extension alongside the Naver SmartEditor ONE, existing Naver login/upload/draft/publish only. All extension processing and records local, no AI API, server, extension sign-up, subscriptions, or auto-publish. Do NOT invent a publish button inside the extension. Main edit action is always an explicit user button. These are concept mockups, NOT proof of editor integration.
+Every artboard uses the small top-right badge "개발 전 시안". All important UI strings must be legible correct Korean; prefer modest amounts of accurate real text over tiny illegible filler. Do not put source code, APIs, technical diagnostics or developer notes inside consumer controls.
+Primary request: Image 02, three detailed extension panel screens on a single landscape 3:2 artboard, high-resolution approximately 2700x1800. This is a designer handoff board, with three equal, tall side-panel screen frames aligned in a row. Each is 400px conceptual width at same scale; zoom the entire board sufficiently for Korean copy. Each header uses the same product name, tabs, active indicator, context-card language, corner style, and pinned footer as image 01.
+Top artboard heading "02  기능별 상세 패널", subtitle "내 글 찾기 · 사진 배치 · 모바일 줄바꿈". Column labels above screens "내 글", "사진", "줄바꿈".
+
+LEFT SCREEN active tab "내 글":
+Selection card "삽입 위치" / "3번 문단 뒤".
+Title "관련 내 글 찾기", subline "등록한 128개 글에서 찾았어요" where 128 is illustrative sample data.
+Search field with magnifier and placeholder "제목 · 태그 · 키워드 검색".
+Small row of extracted keyword chips "아이와 산책", "숲길", "가을".
+Two segmented options "추천" active / "직접 검색".
+Three ordered recommendation cards:
+1 title "아이와 걷기 좋은 숲길 3곳", date "2026.10.02", matched chips "아이", "숲길"; short source excerpt "유모차 없이도 가볍게 걸을 수 있는 코스예요."; actions "원문 열기" and outlined green "링크 삽입".
+2 title "가을 나들이 준비 체크리스트", date "2026.09.28", keyword "가을"; short excerpt "물과 간식, 가벼운 겉옷을 챙겨 주세요."; actions "원문 열기", "링크 삽입".
+3 title "지난 주말 산책 기록", date "2026.09.21", pill "이미 삽입됨", disabled-looking insertion action.
+Bottom section "+ 내 글 등록" with three small plain buttons "URL 등록", "열린 내 글", "파일 가져오기".
+Pinned footer help "선택한 제목을 일반 링크로 삽입해요." No fabricated AI similarity percentages.
+
+MIDDLE SCREEN active tab "사진":
+Title "사진 위치 정리".
+Top outline button "+ 새 사진 추가"; help "위치 선택 후 네이버에서 업로드".
+Row "본문 사진 3장" and miniature list refresh icon.
+Three selectable photograph rows with 70px thumbnails showing autumn forest, park bench, fallen leaves. Labels "사진 01 · 숲길" / "2번 문단 뒤"; "사진 02 · 쉼터" selected green / "6번 문단 뒤", small caption "캡션: 잠깐 쉬어 가요"; "사진 03 · 낙엽" / "8번 문단 뒤". Keep thumbnails small enough not to dominate.
+Divider then title "이동할 위치". Scrollable paragraph list:
+"01  주말에는 아이와 함께…" then a tiny photo-position marker;
+"02  가볍게 걷기 좋은 코스" (subheading shown as contextual destination, not body edit);
+"03  길이 완만해서 아이와…" chosen with green outline;
+"04  중간에 쉬어 갈 벤치도…".
+Segmented placement "문단 앞" and "문단 뒤" active.
+Small placement summary strip "사진 02 → 3번 문단 뒤" and a simple compact diagram text blocks with thin insertion line.
+Pinned footer with neutral tiny caption "사진과 캡션을 함께 이동해요." plus broad green button "지정 위치로 이동". There is no delete/reupload shortcut, no internal-sentence split, no automatic bulk movement.
+
+RIGHT SCREEN active "줄바꿈":
+Selection card "대상 영역" / "선택한 일반 본문".
+Title "모바일 줄바꿈".
+Scope segmented control "선택 영역" active / "일반 본문".
+Field "문장마다 나누기" segmented "1문장" active / "2문장".
+"긴 문장 기준" numeric stepper "32" with suffix "자"; helper "공백이나 구절 경계에서 나눠요."
+"문단 사이 빈 줄" dropdown "1줄".
+"기존 줄바꿈 보존" green on toggle.
+"선택 범위 다시 정리" off toggle.
+A small text-only protection area heading "자동 제외" with chips "소제목", "사진 · 캡션", "표 · 목록", "인용구 · 코드".
+Small preview card shows exact Korean with natural short lines:
+"주말에는 아이와 함께
+숲길을 걸었어요.
+
+바람이 선선해서
+산책하기 좋았어요."
+Footnote "글자 수는 참고 기준이에요."
+Pinned footer broad green button "변경 전후 미리보기"; quiet text "최종 확인은 네이버 모바일 미리보기".
+Outside screens small bottom note "예시 자료로 구성한 디자인 시안". Do not show a direct-apply button that skips preview in the linebreak screen.
+
+IMAGE 03
+Use case: ui-mockup
+Asset type: detailed Korean desktop Chrome-extension UI design mockup, development-before-review deliverable.
+Style: realistic, polished, implementable Figma-style product UI, flat front-on screenshot, crisp Korean typography like Pretendard or Noto Sans KR, exceptional text legibility. Restrained productivity-tool aesthetics. Light theme; white surfaces, #F5F7F6 canvas, #202824 primary ink, #66716B muted text, #139B64 primary green, #EAF7F0 selected/tinted surfaces, #E2E8E4 hairline dividers, #FFF7E8 amber notices. 8px spacing system, 10px card corners, 8px input corners, subtle shadows. Thin outline utility icons; no sparkles, AI motifs, characters, marketing hero, oversized decorations, dark mode, gradients, perspective, monitor device, or photographic backdrop.
+Product working title (verbatim): "블로그 편집 도우미". Four tabs in exactly this order (verbatim): "서식", "내 글", "사진", "줄바꿈".
+Chrome desktop extension alongside the Naver SmartEditor ONE, existing Naver login/upload/draft/publish only. All extension processing and records local, no AI API, server, extension sign-up, subscriptions, or auto-publish. Do NOT invent a publish button inside the extension. Main edit action is always an explicit user button. These are concept mockups, NOT proof of editor integration.
+Every artboard uses the small top-right badge "개발 전 시안". All important UI strings must be legible correct Korean; prefer modest amounts of accurate real text over tiny illegible filler. Do not put source code, APIs, technical diagnostics or developer notes inside consumer controls.
+Primary request: Image 03, a detailed desktop line-break preview dialog, landscape 16:10 approximately 2560x1600. Standalone flat high-fidelity screen on a clean muted background. Board title "03  줄바꿈 변경 전후 미리보기".
+Most of the image is a wide centered white modal titled "줄바꿈 미리보기" with an X close. Under header: "선택한 일반 본문만 변경해요." Small scope badge "3개 문장". No claim of actual editor verification.
+Control strip: rounded outlined chips "1문장마다", "긴 문장 32자", "빈 줄 1줄", "기존 줄바꿈 보존". Secondary quiet action "규칙 수정".
+Two balanced columns separated by a vertical hairline, labeled "변경 전" and "변경 후". Each contains a light-gray preview frame with a white article content card, not a phone device. Preview width readout "모바일 참고 화면"; can show simple "375px" but must not claim exact mobile viewport guarantee.
+Use precisely identical sample Korean wording in the before and after previews. Original ONE PARAGRAPH sample, verbatim:
+"주말에는 아이와 함께 숲길을 걸었어요. 바람이 선선해서 산책하기 좋았고, 중간에 쉬어 갈 벤치도 많았어요. 자세한 코스는 지난 산책 기록에 정리해 두었어요."
+In both versions, the words "아이와 함께" are bold; words "지난 산책 기록" are a green underlined ordinary inline link. These formatting spans must match exactly across both columns.
+BEFORE side: natural wrapping of that one long paragraph, without extra paragraph spacing.
+AFTER side: split that same paragraph into exactly three sentence paragraphs, with one blank line between them; inside the long second sentence allow a faint optional highlighted line break at a clause boundary without changing any words. Do not remove the comma or alter punctuation. Use pale green horizontal boundary tint or subtle green left mark only at changed boundaries, not over whole text.
+Both columns BELOW the text contain the identical small autumn-forest photograph followed by identical caption "가을 햇살이 내려앉은 숲길"; the photo and caption have a small shield-like icon and text "정리 대상에서 제외". This clearly shows the boundary is not merged across the image.
+Below the previews: a calm summary strip with three outline badges "문구 유지", "링크 유지", "서식 유지", alongside small muted text "소제목·사진·표 등은 제외".
+Notice line: "실제 줄 폭은 네이버 모바일 미리보기에서 확인해 주세요."
+Pinned dialog footer: left small help "적용 전에는 본문이 바뀌지 않아요."; right outlined "취소" and broad green "선택 영역에 적용".
+Under the dialog a small separate after-action snackbar state example: green check "줄바꿈을 적용했어요" followed by outline action "되돌리기". Small artboard label "적용 후 상태 예시" makes this a separate design-state example, not a claim that generation ran the editor.
+Composition must prioritize clear before/after text, preservation of formatting and photo, explicit apply and cancel. Avoid fake content rewriting, AI labels, or extension publishing.
+
+IMAGE 04
+Use case: ui-mockup
+Asset type: detailed Korean desktop Chrome-extension UI design mockup, development-before-review deliverable.
+Style: realistic, polished, implementable Figma-style product UI, flat front-on screenshot, crisp Korean typography like Pretendard or Noto Sans KR, exceptional text legibility. Restrained productivity-tool aesthetics. Light theme; white surfaces, #F5F7F6 canvas, #202824 primary ink, #66716B muted text, #139B64 primary green, #EAF7F0 selected/tinted surfaces, #E2E8E4 hairline dividers, #FFF7E8 amber notices. 8px spacing system, 10px card corners, 8px input corners, subtle shadows. Thin outline utility icons; no sparkles, AI motifs, characters, marketing hero, oversized decorations, dark mode, gradients, perspective, monitor device, or photographic backdrop.
+Product working title (verbatim): "블로그 편집 도우미". Four tabs in exactly this order (verbatim): "서식", "내 글", "사진", "줄바꿈".
+Chrome desktop extension alongside the Naver SmartEditor ONE, existing Naver login/upload/draft/publish only. All extension processing and records local, no AI API, server, extension sign-up, subscriptions, or auto-publish. Do NOT invent a publish button inside the extension. Main edit action is always an explicit user button. These are concept mockups, NOT proof of editor integration.
+Every artboard uses the small top-right badge "개발 전 시안". All important UI strings must be legible correct Korean; prefer modest amounts of accurate real text over tiny illegible filler. Do not put source code, APIs, technical diagnostics or developer notes inside consumer controls.
+Primary request: Image 04, detailed extension settings plus key recovery-state mockups. Landscape 16:10 high-resolution approximately 2560x1600. A cohesive spacious designer artboard labeled "04  설정 · 백업 · 작업 상태".
+Composition: left 68% large settings-page screen, right 32% three stacked state-example cards. All UI readable and same design system. This is a companion Chrome extension options page, not website landing page.
+LEFT settings window white with header "설정" and small subtitle "설정과 내 글 자료를 이 PC에서 관리해요.", a close icon.
+Narrow internal sidebar links with simple thin icons: "서식 프리셋", "내 블로그", "줄바꿈 규칙", "백업". Active "백업" green tint.
+Main settings content top includes a compact summary card:
+"내 블로그" label and URL field "https://blog.naver.com/my_blog", small gray "예시 주소", button "주소 저장"; below "내 글 자료 128개" and small note "등록한 내 글만 검색에 사용해요." Compact "글 자료 관리" action.
+Then prominent heading "백업 내보내기" with body "서식 · 줄바꿈 규칙 · 내 글 자료를 파일로 저장해요." Three checked checkbox labels "서식 프리셋", "줄바꿈 규칙", "내 글 자료"; small neutral "블로그 주소 포함"; green button with download icon "백업 파일 내보내기".
+Divider.
+Heading "백업 가져오기", a dashed rectangular file picker with document outline icon and label "백업 파일 선택". Under it a visible import-preview card using sample file "blog-helper-backup.json", rows "프리셋 5개", "규칙 1세트", "게시글 128개"; settings handling radio "기존 설정 유지" active, "가져온 설정으로 바꾸기" inactive; post-dedup help "같은 글은 마지막 수집 시각을 비교해 갱신해요." Neutral button "가져오기 미리보기", green "선택한 자료 가져오기" which only acts after explicit preview choice.
+At bottom a modest lock outline icon and small text "비밀번호·쿠키·세션 정보는 백업에 포함하지 않아요." This is calm factual copy not a warning.
+No sync cloud, email registration or billing.
+
+RIGHT column header "작업 상태 예시" and three independent cards, each with miniature panel header or context to communicate real product states:
+1 amber-tinted, outline location icon, title "위치를 다시 선택해 주세요", body "본문이 바뀌어 기억한 위치를 찾을 수 없어요.", secondary prompt "본문에서 삽입 위치를 다시 선택하세요.", wide light-gray disabled button "적용". No button automatically guesses where to apply.
+2 neutral empty search state with list-plus outline icon, title "등록한 내 글이 없어요", body "URL 등록이나 파일 가져오기로 시작해요.", two clear outline buttons "URL 등록", "파일 가져오기". No automatic crawling claim.
+3 muted in-progress photo state with small progress line and upload outline icon, title "사진 업로드 중", body "업로드가 끝나면 다음 작업을 할 수 있어요.", wide disabled button "사진 이동". Do not show cancel deleting an uploaded existing photo.
+At artboard bottom a quiet legend "초록: 선택·적용   노랑: 재선택 필요   회색: 대기·비활성".
+Constraints: settings and backups stay local, imported post titles aren't executable HTML, there is no executable-code rendering, no fake editor diagnostics. Import preview is explicit and source-record timestamp update is conservative. Match typography and spacing to other boards.

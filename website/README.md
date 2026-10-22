@@ -4,6 +4,8 @@
 
 ## 실행과 확인
 
+저장소 루트에서는 `npm --prefix website run dev`로 실행합니다. 아래 명령은 `website/` 안에서 실행하는 기준입니다.
+
 ```sh
 npm run dev
 npm run check
@@ -23,11 +25,11 @@ npm run preview
 - `docs/captures.json`: 제품 캡처의 출처·원본 해시·크기 기록.
 - `docs/verification.json`: 실제 브라우저 검수 결과.
 
-원본 프로그램 `/Users/msyu/study/naver-blog-editor-extension`은 수정하지 않습니다. 이 폴더는 사이트의 영구 프로젝트이며 임시 clone이나 worktree가 아닙니다.
+비공개 저장소 https://github.com/alstjs1207/geulbugi 에서 확장 프로그램과 사이트를 함께 관리합니다. 로컬 경로는 `/Users/msyu/study/geulbugi`, 사이트 경로는 `/Users/msyu/study/geulbugi/website`입니다. 기존 사이트 커밋 이력은 유지하며 별도의 clone이나 worktree는 만들지 않았습니다.
 
 ## Vercel 배포
 
-이 폴더를 Vercel 프로젝트의 Root Directory로 선택합니다. Framework Preset은 **Other**입니다. 저장소 연결 시 사이트 파일을 저장소에 올린 후 Import하면 됩니다. CLI를 사용하는 경우 이 폴더에서 Vercel에 로그인한 계정으로 `vercel`을 실행합니다.
+GitHub 저장소 `alstjs1207/geulbugi`를 연결하고 Vercel 프로젝트의 **Root Directory를 `website`**로 선택합니다. Framework Preset은 **Other**입니다. 사이트의 `dist/`만 배포하며 확장 프로그램 소스·개인 설정 백업은 배포 산출물에 포함하지 않습니다.
 
 `vercel.json`에 다음 설정이 포함돼 있습니다.
 

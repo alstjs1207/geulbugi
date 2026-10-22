@@ -1,0 +1,10 @@
+{
+  "version": "0.1.26",
+  "sessionBefore": "5a3f31e1-c998-4a71-874e-930a74c6521f",
+  "emptyDocumentConfirmed": true,
+  "adapter": "naver-one-public-ui-v40-50b091a7",
+  "prepareSucceeded": true,
+  "missingConfirmationRejected": true,
+  "reloadAccepted": true,
+  "method": "새 빈 글쓰기 탭에서만 연결·새로고침 확인. 임시저장이나 발행을 실행하지 않음."
+}

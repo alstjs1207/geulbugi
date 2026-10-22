@@ -1,0 +1,12 @@
+
+> naver-blog-editor-extension@0.1.26 store:verify
+> node scripts/verify-store.mjs --draft
+
+{
+  "version": "0.1.26",
+  "draft": true,
+  "assets": 7,
+  "privacyPolicyAccess": "owner-private",
+  "zipSha256": "dcc8d844047fe08c0114795740a8352546af69522cbbe416e0aa894a03d10e7a",
+  "privacyPolicySha256": "bcd2b94a4afe4ded2248663b68bb566211e2a5753dbb7b2a2ea991be0cf10a1d"
+}

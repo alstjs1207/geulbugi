@@ -1,0 +1,20 @@
+{
+  "name": "글부기",
+  "source": "design/brand/geulbugi-original.png",
+  "originalSha256": "7744f20887d030f8bb43dcbc1582b5bdf733aa3e77c8453926a90584fdd301e1",
+  "crop": {
+    "x": 242,
+    "y": 242,
+    "width": 800,
+    "height": 800
+  },
+  "sizes": [
+    16,
+    32,
+    48,
+    128,
+    256
+  ],
+  "paddingRatio": 0.125,
+  "processing": "Preserved original pixels; only outer whitespace cropped and resized with browser canvas. No generative edits."
+}

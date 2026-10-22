@@ -1,0 +1,28 @@
+{
+  "scenario": "모의 편집기: 응답 유실 → 사용자 저장 확인 → 새 세션 연결",
+  "before": {
+    "disabled": true,
+    "reloads": 0
+  },
+  "checked": {
+    "disabled": false,
+    "reloads": 0
+  },
+  "after": {
+    "applyDisabled": false,
+    "reloads": 1,
+    "calls": [
+      "EDITOR_REQUEST:snapshot",
+      "EDITOR_REQUEST:format",
+      "EDITOR_REQUEST:snapshot",
+      "EDITOR_REQUEST:snapshot",
+      "EDITOR_REQUEST:snapshot",
+      "EDITOR_REQUEST:snapshot",
+      "EDITOR_REQUEST:snapshot",
+      "EDITOR_REQUEST:snapshot",
+      "PREPARE_EDITOR_RECOVERY",
+      "RELOAD_SAVED_EDITOR",
+      "EDITOR_REQUEST:snapshot"
+    ]
+  }
+}

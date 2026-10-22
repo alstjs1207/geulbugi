@@ -1,0 +1,29 @@
+[
+  {
+    "blogId": "example_blog",
+    "postId": "10001",
+    "url": "https://blog.naver.com/example_blog/10001",
+    "title": "아이와 걷기 좋은 숲길 3곳",
+    "tags": [
+      "아이",
+      "숲길",
+      "산책"
+    ],
+    "excerpt": "유모차 없이도 가볍게 걸을 수 있는 코스예요.",
+    "publishedAt": "2026-10-02",
+    "collectedAt": "2026-10-06T00:00:00Z"
+  },
+  {
+    "blogId": "example_blog",
+    "postId": "10002",
+    "url": "https://blog.naver.com/example_blog/10002",
+    "title": "가을 나들이 준비 체크리스트",
+    "tags": [
+      "가을",
+      "나들이"
+    ],
+    "excerpt": "물과 간식, 가벼운 겉옷을 챙겨 주세요.",
+    "publishedAt": "2026-09-28",
+    "collectedAt": "2026-10-06T00:00:00Z"
+  }
+]

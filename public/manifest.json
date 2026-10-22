@@ -1,0 +1,77 @@
+{
+  "manifest_version": 3,
+  "name": "글부기",
+  "version": "0.1.29",
+  "description": "서식·인용구, 내 글 검색과 미리보기, 사진 위치, 줄바꿈, 예약 발행 시간을 관리합니다.",
+  "minimum_chrome_version": "116",
+  "permissions": [
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://blog.naver.com/*",
+    "https://m.blog.naver.com/*"
+  ],
+  "action": {
+    "default_title": "글부기 열기",
+    "default_icon": {
+      "16": "icons/16.png",
+      "48": "icons/48.png",
+      "128": "icons/128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/16.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://blog.naver.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "commands": {
+    "apply-preset-1": {
+      "description": "서식 단축키 1 적용"
+    },
+    "apply-preset-2": {
+      "description": "서식 단축키 2 적용"
+    },
+    "apply-preset-3": {
+      "description": "서식 단축키 3 적용"
+    },
+    "apply-preset-4": {
+      "description": "서식 단축키 4 적용"
+    },
+    "apply-preset-5": {
+      "description": "서식 단축키 5 적용"
+    },
+    "apply-preset-6": {
+      "description": "서식 단축키 6 적용"
+    },
+    "apply-preset-7": {
+      "description": "서식 단축키 7 적용"
+    },
+    "apply-preset-8": {
+      "description": "서식 단축키 8 적용"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"
+  }
+}

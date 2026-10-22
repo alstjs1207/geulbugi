@@ -1,0 +1,58 @@
+[
+  {
+    "file": "images/01-format-1280x800.png",
+    "size": [
+      1280,
+      800
+    ],
+    "sha256": "871ebadf16218ff46a1ac749fa88b1a1bd8594eaa4fae8e917bc3347caf06f9d"
+  },
+  {
+    "file": "images/02-quote-1280x800.png",
+    "size": [
+      1280,
+      800
+    ],
+    "sha256": "9fe46ba697fb4f0a79fc6187a845f83b6bf8fb186c13286997ca16c69c95c6b0"
+  },
+  {
+    "file": "images/03-linebreak-1280x800.png",
+    "size": [
+      1280,
+      800
+    ],
+    "sha256": "42467efd3063e79f869359aa6d443fd54bd899c6f2da8eb3b27adaa80fd60745"
+  },
+  {
+    "file": "images/04-photos-1280x800.png",
+    "size": [
+      1280,
+      800
+    ],
+    "sha256": "cdcadeac696af209fe6c623a0f756203d03f0451cec5ae13b258482a28e4cb83"
+  },
+  {
+    "file": "images/05-schedule-1280x800.png",
+    "size": [
+      1280,
+      800
+    ],
+    "sha256": "5a4e6ece721c3148e29a62ab3ba6008c7283c37caa6c454aa4d243b4b1c03f11"
+  },
+  {
+    "file": "images/icon-128.png",
+    "size": [
+      128,
+      128
+    ],
+    "sha256": "a9adcf6c558f5e626659b442d2ae8ab655801bfdb9c77ed2880f6e83e378a4a5"
+  },
+  {
+    "file": "images/promo-440x280.png",
+    "size": [
+      440,
+      280
+    ],
+    "sha256": "3f9422c3430fa078ea7d371f7785686e83bd767da826d2e713eed661fb7c0d3e"
+  }
+]
