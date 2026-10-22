@@ -35,9 +35,9 @@ npm run preview
 - Output Directory: `dist`
 - HTTPS 사이트용 보안 헤더, clean URL, trailing slash.
 
-프로덕션 도메인이 확정되면 Vercel 환경 변수 `SITE_URL`에 `https://도메인` 형식으로 입력하고 다시 빌드하세요. canonical, 절대 Open Graph 이미지 URL, sitemap과 robots.txt의 사이트맵 주소가 생성됩니다. 설정하지 않으면 임의의 도메인을 넣지 않습니다.
+Vercel에서는 시스템 환경 변수 `VERCEL_PROJECT_PRODUCTION_URL`을 사용해 실제 프로덕션 도메인을 canonical, 절대 Open Graph 이미지 URL, sitemap과 robots.txt에 자동 반영합니다. 다른 호스팅이나 도메인을 명시하려면 `SITE_URL`에 `https://도메인` 형식으로 입력하세요. 로컬에서 두 값이 없으면 임의의 도메인을 넣지 않습니다.
 
-공식 참고: [Vercel 프로젝트 설정](https://vercel.com/docs/project-configuration), [빌드 설정](https://vercel.com/docs/builds/configure-a-build).
+공식 참고: [Vercel 프로젝트 설정](https://vercel.com/docs/project-configuration), [빌드 설정](https://vercel.com/docs/builds/configure-a-build), [시스템 환경 변수](https://vercel.com/docs/environment-variables/system-environment-variables#vercel_project_production_url).
 
 ## 스토어 출시 후
 

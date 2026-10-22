@@ -8,9 +8,12 @@ const files = ['index.html', '404.html', 'styles.css', 'app.js', 'motion.js', 's
 await mkdir(out, { recursive: true });
 for (const file of files) await cp(path.join(root, file), path.join(out, file), { recursive: true });
 
-// Only add a canonical domain once the owner has chosen the production URL.
-if (process.env.SITE_URL) {
-  const url = new URL(process.env.SITE_URL);
+// Vercel provides the project's production domain, including on previews.
+// SITE_URL remains an explicit override for another host or chosen domain.
+const siteUrl = process.env.SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '');
+if (siteUrl) {
+  const url = new URL(siteUrl);
   if (url.protocol !== 'https:' || url.pathname !== '/' || url.search || url.hash || url.username || url.password) throw new Error('SITE_URL must be a plain HTTPS origin, for example https://example.com');
   const base = url.origin;
   const routes = ['', 'guide/', 'privacy/'];
