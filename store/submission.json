@@ -1,6 +1,6 @@
 {
   "name": "글부기",
-  "version": "0.1.29",
+  "version": "1.0.0",
   "language": "ko",
   "pricePlan": "free",
   "primaryCategory": "Productivity / Workflow & Planning (생산성 / 워크플로 및 계획)",
@@ -32,7 +32,7 @@
   ],
   "privacyPolicyAccess": "public",
   "privacyPolicyDecision": "2026-10-22: canonical policy moved to Geulbugi website; previous standalone site restricted to owner",
-  "storeSubmissionStatus": "draft completed; not submitted per user instruction 2026-10-22",
+  "storeSubmissionStatus": "1.0.0 package uploaded to existing draft; not submitted per user instruction 2026-10-22",
   "brandSource": "design/brand/geulbugi-original.png",
   "subtitle": "블로그 편집 도우미",
   "traderStatus": "non-trader (user reported 2026-10-21)",
@@ -49,5 +49,8 @@
   "supportUrl": "https://geulbugi.vercel.app/guide/",
   "previousPrivacySiteId": "appgprj_6ad5f40c23d881918e0158d11893d319",
   "prelaunchCheckedAt": "2026-10-22",
-  "previousPrivacySiteAccess": "owner-only custom; anonymous HTTP 403 verified 2026-10-22"
+  "previousPrivacySiteAccess": "owner-only custom; anonymous HTTP 403 verified 2026-10-22",
+  "draftPackageVersion": "1.0.0",
+  "draftPackageUploadedAt": "2026-10-22",
+  "installZipSha256": "0a9cf51707cca5b745f5e45c91201bb34c97a6c261510882006af9e4cb47d5ee"
 }
