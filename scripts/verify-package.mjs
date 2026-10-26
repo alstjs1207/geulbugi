@@ -9,7 +9,7 @@ if(JSON.stringify([...manifest.host_permissions].sort())!==JSON.stringify(['http
 if(manifest.commands['apply-preset-4']?.description!=='서식 단축키 4 적용')fail('Quote shortcut slot missing');
 const pkg=JSON.parse(await readFile('package.json','utf8'));
 if(pkg.version!==manifest.version)fail('Package and manifest versions differ');
-if(manifest.name!=='글부기'||manifest.action.default_title!=='글부기 열기')fail('Product branding differs from the approved name');
+if(manifest.name!=='글부기 - 네이버 블로그 편집 도우미'||manifest.short_name!=='글부기'||manifest.action.default_title!=='글부기 열기')fail('Product branding differs from the approved name');
 if(!manifest.description||manifest.description.length>132)fail('Invalid store description');
 if(manifest.content_scripts.some(script=>script.matches.some(match=>match!=='https://blog.naver.com/*')))fail('Unexpected content script host');
 const files=[manifest.background.service_worker,manifest.side_panel.default_path,manifest.options_page,...manifest.content_scripts.flatMap(s=>s.js),...Object.values(manifest.icons),'privacy.html','THIRD_PARTY_NOTICES.txt'];

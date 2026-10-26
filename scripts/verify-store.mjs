@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 const submission=JSON.parse(await readFile('store/submission.json','utf8')),manifest=JSON.parse(await readFile('dist/manifest.json','utf8'));
 const fail=message=>{throw new Error(message);};
 if(submission.version!==manifest.version)fail('Store and installable package versions differ');
+if(submission.name!==manifest.name)fail('Store and installable package names differ');
 if(!submission.publisherName||!/^\S+@\S+\.\S+$/.test(submission.supportEmail??''))fail('Publisher name and support email are required');
 const assets=[{path:submission.assets.icon,width:128,height:128},{path:submission.assets.smallPromo,width:440,height:280},...submission.assets.screenshots.map(path=>({path,width:1280,height:800}))];
 if(submission.assets.screenshots.length<1||submission.assets.screenshots.length>5)fail('Expected 1–5 screenshots');

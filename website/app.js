@@ -11,7 +11,7 @@ if (storeUrl) {
   document.querySelectorAll('.install-link').forEach(link => { link.href = storeUrl; });
   document.querySelectorAll('[data-install-label]').forEach(label => { label.textContent = 'Chrome에 추가'; });
   document.querySelectorAll('[data-release-status]').forEach(label => { label.textContent = 'Chrome 웹 스토어에서 설치'; });
-  document.querySelectorAll('[data-release-note]').forEach(note => { note.textContent = 'Chrome 웹 스토어에서 글부기를 설치할 수 있어요. 아래 버튼을 눌러 추가해 주세요.'; });
+  document.querySelectorAll('[data-release-note]').forEach(note => { note.textContent = 'Chrome 웹 스토어에서 글부기를 설치할 수 있어요. 아래 버튼을 누르고 ‘Chrome에 추가’와 ‘확장 프로그램 추가’를 선택해 주세요.'; });
 }
 
 const menu = document.querySelector('.mobile-menu');

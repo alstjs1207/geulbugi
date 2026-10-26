@@ -21,7 +21,7 @@ npm run preview
 - 애니메이션: 첫 화면 순차 등장, 한 번만 재생하는 스크롤 등장, 짧은 거북이 인사, 기능 탭 이미지 전환, FAQ 답변 등장. 기기의 ‘동작 줄이기’를 실시간으로 반영하며 JS가 없어도 본문은 표시됩니다.
 - `/guide/`: 설치 안내, 서식·인용구, 최대 8개 단축키 슬롯과 Chrome 키 조합 지정 방법, 기능별 안내.
 - `/privacy/`: 기존 프로그램에 포함된 개인정보처리방침의 본문을 유지한 페이지.
-- `site.config.js`: 정식 출시 후 공개 Chrome 웹 스토어 URL을 연결하는 설정.
+- `site.config.js`: 공개 Chrome 웹 스토어 설치 URL 설정.
 - `docs/captures.json`: 제품 캡처의 출처·원본 해시·크기 기록.
 - `docs/verification.json`: 실제 브라우저 검수 결과.
 
@@ -41,9 +41,13 @@ Vercel에서는 시스템 환경 변수 `VERCEL_PROJECT_PRODUCTION_URL`을 사�
 
 공식 참고: [Vercel 프로젝트 설정](https://vercel.com/docs/project-configuration), [빌드 설정](https://vercel.com/docs/builds/configure-a-build), [시스템 환경 변수](https://vercel.com/docs/environment-variables/system-environment-variables#vercel_project_production_url).
 
-## 스토어 출시 후
+## 스토어 출시 상태
 
-`site.config.js`의 `chromeWebStoreUrl`에 검증한 실제 공개 스토어 URL을 넣고 다시 배포하면 설치 링크와 버튼 문구가 연결됩니다. 빈 상태에서는 미공개 스토어로 연결하지 않고 출시·설치 안내를 보여 줍니다. 프로그램 심사 제출·공개 출시를 실행하는 기능은 없습니다.
+2026-10-26 공개 스토어에서 글부기 1.0.0이 설치 가능한 상태를 확인하고, `site.config.js`와 HTML의 설치 버튼을 실제 스토어 주소로 연결했습니다. JavaScript가 실행되지 않아도 설치 링크가 작동합니다. 출시 준비 문구를 제거하고 사이트의 검색·공유 제목을 **글부기 - 네이버 블로그 편집 도우미**로 맞췄습니다.
+
+공개 스토어: https://chromewebstore.google.com/detail/gmcaompgkpccmnpcbngeoabbfkgcoabg
+
+스토어의 제목 변경 업데이트 1.0.1은 2026-10-26 현재 검토 대기 중이며 승인 후 자동 게시됩니다. 사이트는 같은 스토어 항목으로 연결하므로 업데이트 후에도 링크가 유지됩니다.
 
 ## 이미지와 데이터 처리
 
