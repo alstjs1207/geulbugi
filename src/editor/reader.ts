@@ -4,7 +4,7 @@ import { blockSignature, documentSignature, hash, mergeRuns } from '../core/hash
 import { safeHref,canonicalLinkedUrl } from '../core/security';
 import type {CardReference} from '../platform/link-card-cache';
 
-export const ADAPTER_VERSION='naver-one-public-ui-v42';
+export const ADAPTER_VERSION='naver-one-public-ui-v43';
 const TEXT_SELECTOR='.se-text-paragraph';
 const IGNORED_SELECTOR='.se-placeholder,.__se_placeholder,.__se-toolbar-slot,.se-set-ai-mark-button-wrapper';
 type BufferSelection = { frame:HTMLIFrameElement; document:Document; range:Range; text:string };
@@ -242,7 +242,7 @@ export class EditorReader {
   const buffer=this.bufferSelection;if(!buffer)return true;
   try{return buffer.frame.isConnected&&buffer.frame.contentDocument===buffer.document&&buffer.range.startContainer.isConnected&&buffer.range.endContainer.isConnected&&buffer.range.toString()===buffer.text;}catch{return false;}
  }
- private clearSelection(reason?:string):void{
+ clearSelection(reason?:string):void{
   this.remembered=null;this.range=null;this.bufferSelection=null;this.selectionIssue=reason;this.onChange();
  }
  private rememberRange(range:Range,text:string,buffer:BufferSelection|null=null):boolean{
@@ -443,7 +443,7 @@ export class EditorReader {
    if(native?.rangeCount&&native.isCollapsed&&actual&&this.offset(element,actual.startContainer,actual.startOffset)===offset){doc.body.focus();return;}
   }
   if(this.bufferFrames.size){
-   element.scrollIntoView({block:'center'});const range=this.rangeAt(blockId,offset),rect=range.getClientRects()[0],view=document.defaultView;
+   element.scrollIntoView({block:'center'});const range=this.rangeAt(blockId,offset),rect=range.getClientRects()[0]??(source?.text===''&&offset===0?element.getBoundingClientRect():undefined),view=document.defaultView;
    if(!rect||rect.height<=0||!view)throw new Error('문단의 실제 커서 위치를 확인하지 못했어요.');
    const target=range.startContainer.nodeType===Node.TEXT_NODE?range.startContainer.parentElement:element;
    if(!target)throw new Error('문단을 다시 선택해 주세요.');

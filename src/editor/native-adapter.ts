@@ -105,7 +105,7 @@ export class NativeAdapter {
  }
  async handle(request:EditorRequest):Promise<EditorResponse>{
   let before:Snapshot|undefined;let mutating=false,ownsBusy=false;
-  let photoMoveInterrupted=false,linebreakInterrupted=false,formatInterrupted=false,formatGuard:(()=>void)|undefined,releaseMutationGuard:(()=>void)|undefined;
+  let photoMoveInterrupted=false,linebreakInterrupted=false,formatInterrupted=false,linkInterrupted=false,formatGuard:(()=>void)|undefined,releaseMutationGuard:(()=>void)|undefined;
   let previousJournal:{ai:boolean;count:number;before:string|null;expected:string|null;baseline:Snapshot|null}|undefined;
   try{
    if(!['snapshot','focus','format','link','photo-add','photo-move','photo-add-cancel','linebreak','undo','publish-time','photo-ai-on'].includes(request.type))throw new Error('지원하지 않는 편집 요청이에요.');
@@ -216,6 +216,11 @@ export class NativeAdapter {
     case 'link':{
      const db=await loadDatabase(),post=validatePost(request.post,db.settings.blogUrl);
      if(before.linkedUrls.some(url=>{try{return canonicalPost(url).url===post.url;}catch{return false;}}))throw new Error('이 링크는 이미 본문에 있어요.');
+     const docs=[document,...[...document.querySelectorAll<HTMLIFrameElement>('iframe[id^="input_buffer"]')].flatMap(frame=>{try{return frame.contentDocument?[frame.contentDocument]:[];}catch{return [];}})];
+     const events=['mousedown','keydown','touchstart','input','compositionstart','paste','cut'];
+     const interaction=(event:Event)=>{if(event.isTrusted)linkInterrupted=true;};
+     for(const doc of docs)for(const type of events)doc.addEventListener(type,interaction,true);
+     releaseMutationGuard=()=>{for(const doc of docs)for(const type of events)doc.removeEventListener(type,interaction,true);};
      const range=this.reader.restoreSelection();if(!range.collapsed)throw new Error('기존 글자를 바꾸지 않도록 커서 위치를 클릭해 주세요.');
      const selection=before.selection!,source=before.blocks.find(b=>b.id===selection.blockId);if(!source||!['paragraph','heading'].includes(source.kind))throw new Error('미리보기 카드를 넣을 본문 문단을 선택해 주세요.');await this.reader.selectAt(selection.blockId,selection.start);await this.ui.insertLinkCard(post.url);break;
     }
@@ -253,16 +258,33 @@ export class NativeAdapter {
      break;
     }
    }
-   await new Promise(r=>setTimeout(r,100));if(request.type!=='photo-ai-on')await this.reader.loadPendingPhotos();const after=await this.snapshot();if(request.type==='format')formatGuard?.();
+   await new Promise(r=>setTimeout(r,100));if(request.type!=='photo-ai-on')await this.reader.loadPendingPhotos();let after=await this.snapshot();if(request.type==='format')formatGuard?.();
    if(after.revision===before.revision)throw new Error('본문 변경을 확인하지 못했어요. 적용할 위치를 다시 선택해 주세요.');
    if(request.type==='photo-ai-on'?(photoAiContent(after)!==photoAiContent(before)||photoAiStatus(after.blocks).on!==photoAiStatus(after.blocks).total):this.photos(after.blocks)!==this.photos(before.blocks))throw new Error('사진·캡션·속성 보존을 확인하지 못했어요.');
    if(request.type==='photo-move'&&photoMoveInterrupted)throw new Error('사진 이동 중 직접 수정한 내용이 있어요. 네이버에서 사진 위치를 확인해 주세요.');
    verifyPostconditions(before,after,request);
+   const completedRevision=after.revision;
    if(request.type==='link'){
     const url=canonicalPost(request.post.url).url,card=after.blocks.find(block=>block.kind==='link-card'&&block.linkCard?.url===url),reference=card?.componentId?this.reader.cardReference(card.componentId):undefined;
     if(reference)try{await saveCardReference(reference);}catch{ /* The live card and undo remain valid if its local URL cache cannot be saved. */ }
+    // Native insertion replaces the original paragraph and often leaves the
+    // card selected. Continue at the following paragraph, never the old anchor
+    // or a later paragraph beyond another component.
+    const next=card?after.blocks[after.blocks.indexOf(card)+1]:undefined,completed=after;
+    const guard=()=>{
+     const current=this.reader.read();
+     if(linkInterrupted||current.sessionId!==completed.sessionId||current.documentKey!==completed.documentKey||current.revision!==completedRevision)throw new Error('본문이나 커서가 바뀌어 다음 삽입 위치를 이동하지 않았어요.');
+    };
+    if(!linkInterrupted){
+     this.reader.clearSelection('링크를 삽입했어요. 다음 삽입 위치를 본문에서 선택해 주세요.');
+     if(next&&['paragraph','heading'].includes(next.kind))try{guard();await this.reader.selectAt(next.id,0,guard);}catch{
+      // A cursor-only failure must not undo or lock a verified insertion.
+      if(!linkInterrupted)this.reader.clearSelection('링크를 삽입했어요. 다음 삽입 위치를 본문에서 선택해 주세요.');
+     }
+    }
+    after=await this.snapshot();
    }
-   this.undoExpected=after.revision;after.canUndo=this.undoCount>0;
+   this.undoExpected=completedRevision;after.canUndo=this.undoCount>0&&after.revision===completedRevision;
    return {ok:true,snapshot:after};
   }catch(error){
    if(request.type==='format'&&formatGuard)try{formatGuard();}catch(guardError){error=guardError;}

@@ -21,6 +21,40 @@ function adapter(){const instance=new NativeAdapter();adapters.push(instance);co
 const preset={id:'bold-test',name:'굵게만',description:'',format:{bold:true}};
 const post={blogId:'example_blog',postId:'10001',url:'https://blog.naver.com/example_blog/10001',title:'링크 제목',tags:[],excerpt:'',publishedAt:'',collectedAt:'2026-10-07T00:00:00Z'};
 describe('direct editing and exact undo (mocked native UI)',()=>{
+ it.each([0,4,-1])('continues inserting cards in order after a native paragraph replacement at offset %s',async offset=>{
+  const first=adapter(),source=first.reader.read().blocks[0];if(offset<0)offset=source.text.length;const range=first.reader.rangeAt(source.id,offset);
+  window.getSelection()!.removeAllRanges();window.getSelection()!.addRange(range);first.reader.captureSelection();
+  const original=first.reader.read(),history:string[]=[];
+  vi.spyOn(PublicEditorUI.prototype,'insertLinkCard').mockImplementation(async function(this:PublicEditorUI,url){
+   const snapshot=first.reader.read(),selection=snapshot.selection!,block=snapshot.blocks.find(b=>b.id===selection.blockId)!,element=first.reader.elements.get(block.id)!;
+   history.push(document.querySelector('.se-main-container')!.innerHTML);
+   const tail=element.cloneNode(true) as HTMLElement;tail.querySelector('span')!.textContent=block.text.slice(selection.start);element.querySelector('span')!.textContent=block.text.slice(0,selection.start);
+   const card=document.createElement('div');card.id='card-'+history.length;card.className='se-component se-oglink';card.innerHTML='<strong class="se-oglink-title">링크 제목</strong>';element.after(card,tail);
+   const root=document.querySelector('.se-main-container')!;root.innerHTML=root.innerHTML;
+   const inserted=first.reader.read().blocks.find(b=>b.componentId===card.id)!;first.reader.rememberLinkCard(inserted.id,url);(this as unknown as {didEdit:()=>void}).didEdit();
+  });
+  vi.spyOn(PublicEditorUI.prototype,'undo').mockImplementation(async()=>{document.querySelector('.se-main-container')!.innerHTML=history.pop()!;return true;});
+  for(const postId of ['10001','10002','10003']){
+   const result=await first.handle({type:'link',post:{...post,postId,url:'https://blog.naver.com/example_blog/'+postId}});
+   expect(result.ok,JSON.stringify(result)).toBe(true);if(!result.ok)return;
+   const snapshot=result.snapshot,card=snapshot.blocks.findIndex(b=>b.linkCard?.url.endsWith('/'+postId)),next=snapshot.blocks[card+1];
+   expect(snapshot.selection).toMatchObject({blockId:next.id,start:0,end:0,valid:true,collapsed:true});
+   expect(next.text).toBe(source.text.slice(offset));expect(snapshot.canUndo).toBe(true);
+  }
+  const final=first.reader.read();expect(final.blocks.filter(b=>b.linkCard).map(b=>b.linkCard!.url)).toEqual(['10001','10002','10003'].map(id=>'https://blog.naver.com/example_blog/'+id));
+  expect(final.blocks.filter(b=>b.kind==='paragraph').map(b=>b.text).join('')).toBe(source.text);
+  expect((await first.handle({type:'undo'})).ok).toBe(true);expect(first.reader.read().blocks.filter(b=>b.linkCard)).toHaveLength(2);
+  expect(original.blocks[0].text).toBe(source.text);
+ });
+ it('keeps a verified card and its undo when positioning the next cursor fails',async()=>{
+  const first=adapter(),source=first.reader.read().blocks[0];window.getSelection()!.removeAllRanges();window.getSelection()!.addRange(first.reader.rangeAt(source.id,source.text.length));first.reader.captureSelection();
+  vi.spyOn(PublicEditorUI.prototype,'insertLinkCard').mockImplementation(async function(this:PublicEditorUI,url){
+   document.querySelector('p')!.insertAdjacentHTML('afterend','<div id="new-card" class="se-component se-oglink"><strong class="se-oglink-title">링크 제목</strong></div><p class="se-text-paragraph"><span></span></p>');
+   first.reader.rememberLinkCard(first.reader.read().blocks.find(b=>b.kind==='link-card')!.id,url);(this as unknown as {didEdit:()=>void}).didEdit();
+  });
+  const select=first.reader.selectAt.bind(first.reader);vi.spyOn(first.reader,'selectAt').mockImplementation(async(id,offset,guard)=>{if(id===source.id)return select(id,offset,guard);throw new Error('커서 확인 실패');});
+  const result=await first.handle({type:'link',post});expect(result).toMatchObject({ok:true,snapshot:{canUndo:true,selection:null}});expect((await first.snapshot()).issue).toBeUndefined();expect(first.reader.read().linkedUrls).toContain(post.url);expect(PublicEditorUI.prototype.undo).not.toHaveBeenCalled();
+ });
  it('automatically checks off-screen photos on connect, restores scroll and preserves selected text',async()=>{
   const root=document.querySelector<HTMLElement>('.se-main-container')!;root.scrollTop=125;
   root.insertAdjacentHTML('beforeend','<div class="se-component se-image"><img class="se-image-resource" src="data:image/svg+xml;base64,AA=="><div class="se-caption">사진 캡션</div></div>');

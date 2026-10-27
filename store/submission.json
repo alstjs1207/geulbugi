@@ -1,6 +1,6 @@
 {
   "name": "글부기 - 네이버 블로그 편집 도우미",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "language": "ko",
   "pricePlan": "free",
   "primaryCategory": "Productivity / Workflow & Planning (생산성 / 워크플로 및 계획)",
@@ -9,8 +9,8 @@
   "homepageUrl": "https://geulbugi.vercel.app/",
   "privacyPolicyUrl": "https://geulbugi.vercel.app/privacy/",
   "distribution": "public",
-  "reviewPublishing": "automatic publication after review; title change authorized 2026-10-26",
-  "accountStatus": "developer dashboard accessible; 1.0.1 submitted 2026-10-26; pending review",
+  "reviewPublishing": "automatic publication after review; 1.0.2 release authorized 2026-10-27",
+  "accountStatus": "developer dashboard accessible; 1.0.2 submitted 2026-10-27; pending review",
   "assets": {
     "icon": "images/icon-128.png",
     "smallPromo": "images/promo-440x280.png",
@@ -32,7 +32,7 @@
   ],
   "privacyPolicyAccess": "public",
   "privacyPolicyDecision": "2026-10-22: canonical policy moved to Geulbugi website; previous standalone site restricted to owner",
-  "storeSubmissionStatus": "1.0.1 title-change update submitted 2026-10-26; pending review; automatic publication after approval",
+  "storeSubmissionStatus": "1.0.2 continuous-link-insertion update submitted 2026-10-27; pending review; automatic publication after approval",
   "brandSource": "design/brand/geulbugi-original.png",
   "subtitle": "네이버 블로그 편집 도우미",
   "traderStatus": "non-trader (user reported 2026-10-21)",
@@ -50,10 +50,16 @@
   "previousPrivacySiteId": "appgprj_6ad5f40c23d881918e0158d11893d319",
   "prelaunchCheckedAt": "2026-10-22",
   "previousPrivacySiteAccess": "owner-only custom; anonymous HTTP 403 verified 2026-10-22",
-  "draftPackageVersion": "1.0.1",
-  "draftPackageUploadedAt": "2026-10-26",
-  "installZipSha256": "74b5fbcf4a8c3055cadfe496b8db76cbfef3a9cb5a78a105f4a9c6455b757c12",
+  "draftPackageVersion": "1.0.2",
+  "draftPackageUploadedAt": "2026-10-27",
+  "installZipSha256": "9fc9193b0a3ba7c298b26a8c116e5a2908b30f9eeb16148ecd3baee3130f49c5",
   "publishedPackageVersion": "1.0.0",
-  "submittedAt": "2026-10-26",
-  "autoPublishAfterReview": true
+  "submittedAt": "2026-10-27",
+  "autoPublishAfterReview": true,
+  "previousSubmission": {
+    "version": "1.0.1",
+    "submittedAt": "2026-10-26",
+    "cancelledAt": "2026-10-27",
+    "reason": "replaced with 1.0.2 including continuous link insertion improvement"
+  }
 }

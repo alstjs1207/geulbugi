@@ -107,6 +107,6 @@ export function OwnPostsPanel(props: Props) {
    {source === 'saved' && localHits.length > limit && <button type="button" className="secondary full" onClick={() => setLimit(value => value + 40)}>저장한 글 더 보기 · {localHits.length - limit}개 남음</button>}
   </>}
   <details className="register-area"><summary>내 글 직접 추가 · 파일 가져오기</summary><p className="helper">직접 추가한 자료는 ‘저장한 글’에서 검색하고 추천에 사용할 수 있어요.</p><div className="button-row"><button className="secondary" onClick={props.onRegister}><Link2 size={14}/>URL 등록</button><button className="secondary" disabled={busy} onClick={props.onOpened}><BookOpen size={14}/>열린 내 글</button><button className="secondary" onClick={props.onImport}><Upload size={14}/>파일</button></div></details>
-  <p className="helper">본문에 커서를 놓고 미리보기 삽입을 누르면 그 위치에 링크 카드를 넣어요.</p>
+  <p className="helper">본문에 커서를 놓고 미리보기를 삽입하세요. 삽입 후에는 카드 뒤에 다음 링크를 이어서 넣을 수 있어요.</p>
  </>;
 }

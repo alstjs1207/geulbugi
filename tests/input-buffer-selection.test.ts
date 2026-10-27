@@ -29,6 +29,22 @@ function nativeCaret(offset:number){
 }
 
 describe('observed SmartEditor input buffer selection',()=>{
+ it('moves from a selected card into a following empty paragraph without a text rectangle',async()=>{
+  const paragraph=document.querySelectorAll('p')[1];paragraph.innerHTML='<span></span>';
+  const block=reader.read().blocks[1],original=reader.rangeAt.bind(reader),keys=vi.fn();
+  vi.spyOn(reader,'rangeAt').mockImplementation((id,offset)=>{const range=original(id,offset);range.getClientRects=()=>[] as unknown as DOMRectList;return range;});
+  vi.spyOn(HTMLElement.prototype,'getBoundingClientRect').mockImplementation(function(this:HTMLElement){const top=this===paragraph?100:this.tagName==='P'?20:0;return {left:0,top,right:600,bottom:top+30,width:600,height:this.tagName==='P'?30:0,x:0,y:top,toJSON:()=>({})};});
+  paragraph.scrollIntoView=vi.fn();
+  const Original=document.defaultView!.MouseEvent;vi.spyOn(document.defaultView!,'MouseEvent').mockImplementation(class extends Original{constructor(type:string,init?:MouseEventInit){super(type,{...init,view:null});}});
+  paragraph.addEventListener('click',()=>{
+   doc.body.replaceChildren();const range=doc.createRange();range.selectNodeContents(doc.body);range.collapse(true);const selection=doc.defaultView!.getSelection()!;selection.removeAllRanges();selection.addRange(range);
+   document.body.insertAdjacentHTML('beforeend','<div class="se-selection"><div class="se-caret" style="left:0px;top:103px;height:15px"></div></div>');
+   doc.dispatchEvent(new Event('selectionchange'));
+  });
+  doc.body.addEventListener('keydown',keys);reader.clearSelection();const before=reader.read().revision;
+  await reader.selectAt(block.id,0);
+  expect(reader.read().selection).toMatchObject({blockId:block.id,start:0,end:0,valid:true,collapsed:true});expect(reader.read().revision).toBe(before);expect(keys).not.toHaveBeenCalled();
+ });
  it.each([{offset:3,key:'ArrowLeft'},{offset:8,key:'ArrowRight'}])('collapses a selected native word to its verified endpoint $offset before editing',async({offset,key})=>{
   nativeCaret(offset);choose('굵은 글자',3);const block=reader.read().blocks[0];reader.elements.get(block.id)!.scrollIntoView=vi.fn();
   const Original=document.defaultView!.MouseEvent;vi.spyOn(document.defaultView!,'MouseEvent').mockImplementation(class extends Original{constructor(type:string,init?:MouseEventInit){super(type,{...init,view:null});}});
