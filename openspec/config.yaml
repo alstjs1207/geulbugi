@@ -1,0 +1,23 @@
+schema: spec-driven
+
+context: |
+  Language: ko. Keep OpenSpec structural headings and SHALL/MUST in English.
+  Geulbugi is a Chrome Manifest V3 extension for the PC Naver Blog editor.
+  Chrome >=116; React/TypeScript; local settings and explicit Naver communication.
+  Current package and local materials: 1.1.2. Public-version evidence and actual
+  dashboard publication are separate records; never invent publication dates.
+  Preserve draft text, photos, user edits, undo boundaries, and saved preferences.
+  Final Naver save/publish actions belong to the user.
+  Read openspec/README.md and the affected current specification before changes.
+  Planned work lives in changes; only verified current behavior lives in specs.
+  Store dashboard copy is deferred until publication is confirmed, per user
+  direction on 2026-11-10. Git commit/push does not authorize that external action.
+
+rules:
+  proposal:
+    - Identify affected current capabilities and preserve the user's timing constraints.
+  specs:
+    - Use requirement IDs, SHALL/MUST, and concrete WHEN/THEN scenarios.
+    - Keep source and regression-test evidence in a separate Evidence section.
+  tasks:
+    - Check only work actually performed and verified; keep external pending work open.

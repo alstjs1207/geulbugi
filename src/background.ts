@@ -1,9 +1,11 @@
 import {prepareEditorRecovery,reloadSavedEditor} from './platform/editor-recovery';
 import { loadDatabase, commitDatabaseDiff } from './platform/storage';
-import { canonicalPost, validatePost } from './core/security';
+import { canonicalPost, normalizeBlog, validatePost } from './core/security';
 import type { EditorRequest, EditorResponse } from './core/types';
 import { normalizeBlogSearchRequest } from './core/blog-search';
-import { fetchBlogSearchHtml } from './platform/blog-search-fetch';
+import { recentBlogUrl } from './core/blog-recent';
+import { normalizeCategoryNo } from './core/blog-categories';
+import { fetchBlogSearchHtml, fetchRecentBlogHtml } from './platform/blog-search-fetch';
 import {supportsPhotoAi,PHOTO_AI_RECONNECT,supportsPublishTime,PUBLISH_TIME_RECONNECT,isUnsupportedEditorRequest} from './core/editor-capabilities';
 type Frame={id:number;editable:boolean};
 let registrations:Promise<void>=Promise.resolve();
@@ -16,8 +18,12 @@ async function uncertainSnapshot(tabId:number,response:EditorResponse):Promise<E
  if(saved.sessionId!==response.snapshot.sessionId){await chrome.storage.session.remove(key);return response;}
  return {...response,snapshot:{...response.snapshot,issue:response.snapshot.issue??saved.error,canUndo:false}};
 }
-async function sendToEditor(request:EditorRequest,windowId?:number):Promise<EditorResponse>{
- const tab=await activeTab(windowId);const key='frames:'+tab.id;
+async function sendToEditor(request:EditorRequest,windowId?:number,commandTab?:chrome.tabs.Tab):Promise<EditorResponse>{
+ // Commands carry the tab where the key was pressed. A storage read can yield
+ // long enough for a different tab/window to become active before dispatch.
+ const tab=commandTab??await activeTab(windowId);
+ if(!tab.id||!tab.url||new URL(tab.url).hostname!=='blog.naver.com')throw new Error('PC 네이버 블로그 글쓰기 탭을 열어 주세요.');
+ const key='frames:'+tab.id;
  await registrations;
  const frames=((await chrome.storage.session.get(key))[key]??[]) as Frame[];
  const mutation=!['snapshot','focus'].includes(request.type);
@@ -71,6 +77,31 @@ chrome.runtime.onMessage.addListener((message,sender,sendResponse)=>{
    return {ok:true,html,url:response.url};
   })().then(sendResponse).catch(error=>sendResponse({ok:false,error:error.message}));return true;
  }
+ if(message?.type==='BLOG_CATEGORIES'){
+  void (async()=>{
+   if(sender.id!==chrome.runtime.id)throw new Error('글부기에서 카테고리를 조회해 주세요.');
+   if(typeof message.blogUrl!=='string'||!message.blogUrl.trim())throw new Error('내 블로그 주소를 먼저 설정해 주세요.');
+   const blogUrl=normalizeBlog(message.blogUrl),db=await loadDatabase();
+   if(blogUrl!==db.settings.blogUrl)throw new Error('설정한 내 블로그의 카테고리만 조회할 수 있어요.');
+   const tab=await activeTab(message.windowId);
+   let result;
+   try{result=await chrome.tabs.sendMessage(tab.id!,{type:'BLOG_CATEGORIES_HTML',blogUrl},{frameId:0});}
+   catch{throw new Error('카테고리를 연결하려면 네이버 글쓰기 탭을 새로고침한 뒤 다시 불러와 주세요.');}
+   if(!result?.ok)throw new Error(result?.error??'네이버 글쓰기 탭을 선택하고 카테고리를 다시 불러와 주세요.');
+   return result;
+  })().then(sendResponse).catch(error=>sendResponse({ok:false,error:error.message}));return true;
+ }
+ if(message?.type==='RECENT_OWN_BLOG'){
+  void (async()=>{
+   if(sender.id!==chrome.runtime.id)throw new Error('확장 프로그램에서 최근 글을 조회해 주세요.');
+   if(typeof message.blogUrl!=='string'||!message.blogUrl.trim())throw new Error('내 블로그 주소를 먼저 설정해 주세요.');
+   const blogUrl=normalizeBlog(message.blogUrl),page=message.page??1,categoryNo=normalizeCategoryNo(message.categoryNo);
+   recentBlogUrl(blogUrl,page,categoryNo);
+   const db=await loadDatabase();
+   if(blogUrl!==db.settings.blogUrl)throw new Error('설정한 내 블로그에서만 조회할 수 있어요. 블로그 주소를 확인해 주세요.');
+   return {ok:true,...await (categoryNo==='0'?fetchRecentBlogHtml(blogUrl,page):fetchRecentBlogHtml(blogUrl,page,categoryNo))};
+  })().then(sendResponse).catch(error=>sendResponse({ok:false,error:error.message}));return true;
+ }
  if(message?.type==='SEARCH_OWN_BLOG'){
   void (async()=>{
    if(sender.id!==chrome.runtime.id)throw new Error('확장 프로그램에서 내 글 검색을 실행해 주세요.');
@@ -81,8 +112,8 @@ chrome.runtime.onMessage.addListener((message,sender,sendResponse)=>{
  }
  return false;
 });
-chrome.commands.onCommand.addListener(async command=>{
+chrome.commands.onCommand.addListener(async (command,tab)=>{
  if(!/^apply-preset-[1-8]$/.test(command))return;
  const db=await loadDatabase(),id=db.settings.shortcutPresets[command.split('-').at(-1)!],preset=db.presets.find(p=>p.id===id);
- if(!preset)return;try{const response=await sendToEditor({type:'format',preset});await chrome.runtime.sendMessage({type:'SHORTCUT_RESULT',response});}catch{}
+ if(!preset)return;try{const response=await sendToEditor({type:'format',preset},undefined,tab);await chrome.runtime.sendMessage({type:'SHORTCUT_RESULT',response,...(tab?{windowId:tab.windowId}:{})});}catch{}
 });

@@ -1,1 +1,39 @@
-<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>글부기 · 1.0.2 출시 자료</title><style>body{font:16px/1.8 system-ui,sans-serif;color:#263b2e;background:#f6f8f4;margin:0}main{max-width:900px;margin:auto;padding:40px 24px}header{display:flex;gap:16px;align-items:center}header img{width:96px;height:96px}h1{margin:0}.subtitle{font-size:13px;color:#6f7a73;margin:0}a{color:#16875a}.shots{display:grid;grid-template-columns:1fr 1fr;gap:14px}.shots img{width:100%}code{font-size:11px;overflow-wrap:anywhere}</style><main><header><img src="images/icon-128.png" alt=""><div><h1>글부기</h1><p class="subtitle">네이버 블로그 편집 도우미</p><p>2026.10.27 · v1.0.2 출시 자료</p></div></header><h2>내 글 링크 연속 삽입 개선</h2><p>링크 미리보기 삽입 후 카드 바로 뒤의 커서를 자동으로 기억합니다. 본문을 다시 클릭하지 않고 다음 글 링크를 이어서 넣을 수 있습니다. 기존 문구와 서식, 카드 순서 및 마지막 카드 되돌리기를 확인했습니다. 권한과 데이터 처리 범위는 변경하지 않았습니다. 1.0.2 업데이트를 2026-10-27 심사에 제출했습니다. 현재 검토 대기 중이며 승인 후 자동 게시됩니다.</p><h2>편집 신뢰성 문제 6건 수정</h2><p>되돌리기와 서식의 실제 반영을 확인하며, 사용자 직접 입력은 자동 복원으로 지우지 않습니다. 지연된 사진 AI·예약 설정은 확인을 기다리고, 미확정 입력의 중복 실행과 잘못된 복원 안내를 차단합니다. 공백 위치와 수를 포함해 원문을 검사합니다.</p><h2>전체 줄바꿈 중간 실패 대응</h2><p>고정 대기 대신 커서와 Enter의 실제 반영을 기다립니다. 문단이 다시 그려져도 고유 ID와 원문을 확인해 이어가며, 완료된 각 줄바꿈의 위치를 검사합니다. 직접 입력이나 미확인 상태에서는 원고를 보존하고 복구를 안내합니다.</p><h2>줄바꿈 미리보기 위치 표시</h2><p>설정 적용 예시를 실제 계산 결과로 갱신합니다. ↵로 실제 줄바꿈 위치를 표시하고, 줄바꿈 위치와 모바일 참고 화면을 구분합니다. 부분 선택의 앞뒤 문맥과 전후 본문 폭을 유지합니다.</p><h2>작업 실패 복구 안내 개선</h2><p>작업 결과를 확인하지 못하면 본문 확인과 네이버 상단 ‘저장’(임시저장) 순서를 안내합니다. 저장 완료 확인 후 ‘저장한 글 새로고침’으로 다시 연결합니다. 단순 연결 문제는 ‘연결 다시 확인’으로 재검사합니다.</p><p>응답이 유실된 작업의 중복 실행을 막고, 링크 이미지의 완료 확인 대기를 늘렸습니다. 자동 검사 603개 / 45개 파일, 타입·빌드·패키지 검사를 통과했습니다.</p><h2>설치와 제출 자료</h2><p><a href="../artifacts/geulbugi-1.0.2.zip">설치 ZIP</a> · <a href="../artifacts/geulbugi-store-materials-1.0.2.zip">스토어 자료 ZIP</a> · <a href="listing-ko.txt">스토어 소개</a> · <a href="reviewer-instructions-ko.txt">심사 안내</a> · <a href="site/privacy.html">개인정보처리방침</a></p><p>2026-10-22 개인정보처리방침을 글부기 소개 사이트로 통합했습니다. <a href="https://geulbugi.vercel.app/privacy/" target="_blank" rel="noopener noreferrer">공개 처리방침</a>은 로그인 없이 읽을 수 있습니다. 1.0.2 연속 링크 삽입 개선 업데이트를 심사에 제출했습니다.</p><p>화면은 제품의 예시 문서 미리보기입니다. 개인 원고나 로그인 정보를 포함하지 않습니다.</p><div class="shots"><img src="images/01-format-1280x800.png" alt="글부기 예시 화면"><img src="images/02-quote-1280x800.png" alt="글부기 예시 화면"><img src="images/03-linebreak-1280x800.png" alt="글부기 예시 화면"><img src="images/04-photos-1280x800.png" alt="글부기 예시 화면"><img src="images/05-schedule-1280x800.png" alt="글부기 예시 화면"></div><p>설치 ZIP SHA-256<br><code>9fc9193b0a3ba7c298b26a8c116e5a2908b30f9eeb16148ecd3baee3130f49c5</code></p></main></html>
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>글부기 · 1.1.2 스토어 자료</title>
+<style>body{font:16px/1.8 system-ui,sans-serif;color:#263b2e;background:#f6f8f4;margin:0}main{max-width:900px;margin:auto;padding:40px 24px}header{display:flex;gap:16px;align-items:center}header img{width:96px;height:96px}h1{margin:0}.subtitle{font-size:13px;color:#6f7a73;margin:0}a{color:#16875a}.shots{display:grid;grid-template-columns:1fr 1fr;gap:14px}.shots img{width:100%}code{font-size:11px;overflow-wrap:anywhere}</style>
+<main>
+<header><img src="images/icon-128.png" alt=""><div><h1>글부기</h1><p class="subtitle">네이버 블로그 편집 도우미</p><p>공개 버전 v1.1.2 · 자료 정리일 2026.11.10</p></div></header>
+<p>현재 공개 버전은 1.1.2입니다(2026-11-10 사용자 확인). 이 날짜는 자료 정리일이며 실제 출시일을 뜻하지 않습니다. 이번 정리는 로컬 README와 스토어 자료에 반영했으며, 대시보드 저장·패키지 업로드·심사 제출은 수행하지 않았습니다.</p>
+<p>스토어 문구의 대시보드 반영은 2026-11-10 사용자 지시에 따라 게시 확인 후 진행합니다. <a href="../openspec/changes/sync-store-materials-after-publication/tasks.md">남은 작업</a>에서 상태를 관리합니다.</p>
+<h2>1.1.2 서식 적용 후 커서 이동 개선</h2>
+<p>서식 적용 직후 본문을 클릭해 커서를 옮겼을 때, 적용이 끝났는데도 복구 안내가 표시되던 문제를 수정했습니다. 원래 선택 영역의 서식·원문·사진 보존을 확인한 뒤 새 커서 위치와 직전 작업 되돌리기를 유지합니다. 부분 적용이나 직접 입력은 기존처럼 보호합니다.</p>
+<h2>내 글 탐색과 단축키</h2>
+<p>내 글 탭에서 최근 공개 글을 최대 10개 표시합니다. 네이버 블로그 탭이 열려 있으면 실제 카테고리와 하위 분류별 최근 글을 조회할 수 있습니다. 키워드 검색은 전체 카테고리를 최근 작성일순으로 검색하고, '최근 글 보기'로 최근 목록에 복귀합니다. 본문 위치를 다시 선택하지 않고 링크 카드를 연속 삽입할 수 있습니다.</p>
+<p>최대 8개 단축키 슬롯에 서식·인용구 프리셋을 연결합니다. 단축키 연결 상태 갱신, 실행 대상 탭 유지, 기능 탭 전환 시 스크롤 상단 복귀와 빠른 입력 중 보조키를 직접 편집으로 오인하던 문제의 수정이 포함되어 있습니다.</p>
+<h2>편집·미리보기·복구</h2>
+<p>서식·인용구, 사진 이동·추가·AI 활용 설정, 의미를 살린 줄바꿈 미리보기와 예약 날짜·시간 설정을 제공합니다. 최종 저장·발행은 네이버 화면에서 직접 실행합니다. 결과가 불확실한 작업은 본문 확인 → 네이버 상단 '저장'(임시저장) → 저장 완료 확인 → '저장한 글 새로고침' 순서로 복구합니다.</p>
+<h2>설치와 제출 자료</h2>
+<p><a href="https://chromewebstore.google.com/detail/gmcaompgkpccmnpcbngeoabbfkgcoabg">Chrome 웹 스토어</a> · <a href="../artifacts/geulbugi-1.1.2.zip">로컬 설치 ZIP</a> · <a href="../artifacts/geulbugi-store-materials-1.1.2.zip">스토어 자료 ZIP</a></p>
+<ul>
+<li><a href="listing-ko.txt">스토어 소개</a></li>
+<li><a href="privacy-fields-ko.txt">개인정보 보호 탭 입력안</a></li>
+<li><a href="reviewer-instructions-ko.txt">상세 심사 안내</a> · <a href="reviewer-dashboard-ko.txt">대시보드용 심사 안내</a></li>
+<li><a href="submission.json">공개 상태·자료 정리 기록</a> · <a href="assets.json">이미지 목록과 해시</a></li>
+<li><a href="site/privacy.html">패키지와 동일한 개인정보처리방침</a> · <a href="https://geulbugi.vercel.app/privacy/">공개 개인정보처리방침</a></li>
+</ul>
+<p>기존 1.1.2 로컬 설치 ZIP을 유지했습니다. 스토어에서 내려받은 패키지와 동일하다고 검증한 기록은 아닙니다. 과거 제출·검증 기록은 문서와 submission.json의 submissionHistory에 보존하며 현재 버전의 검증 결과로 재사용하지 않습니다.</p>
+<h2>스토어 이미지</h2>
+<p>기존 아이콘·프로모션 타일·스크린샷 5개를 유지했습니다. 화면은 제품의 예시 문서 미리보기이며 개인 원고나 로그인 정보를 포함하지 않습니다. 1.1.2에서 새로 촬영한 이미지나 실제 네이버 연동 검증 화면은 아닙니다.</p>
+<div class="shots">
+<img src="images/01-format-1280x800.png" alt="서식 적용 예시 화면">
+<img src="images/02-quote-1280x800.png" alt="인용구 선택 예시 화면">
+<img src="images/03-linebreak-1280x800.png" alt="줄바꿈 미리보기 예시 화면">
+<img src="images/04-photos-1280x800.png" alt="사진 위치 정리 예시 화면">
+<img src="images/05-schedule-1280x800.png" alt="예약 시간 설정 예시 화면">
+</div>
+<p>로컬 설치 ZIP SHA-256<br><code>6c54bc6d55cf263ca48210ddf4502866c8997e28033479aa3f73357d2d37949e</code></p>
+</main>
+</html>

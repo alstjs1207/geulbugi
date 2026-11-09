@@ -35,7 +35,7 @@ export function BlogSettings({ savedUrl, postCount, connected, onSave }: Props) 
 
  return <>
   <h3>내 블로그</h3>
-  <p>내 블로그 주소를 한 번 저장하면 공개 글을 바로 검색할 수 있어요.</p>
+  <p>내 블로그 주소를 한 번 저장하면 내 글 탭에서 최근 공개 글을 보고 검색할 수 있어요.</p>
   <form onSubmit={event => void submit(event)} aria-busy={saving}>
    <label className="stacked-label" htmlFor="blog-address">블로그 주소
     <input id="blog-address" value={input} disabled={saving} placeholder="https://blog.naver.com/아이디" onChange={event => { setInput(event.target.value); setFeedback(null); }}/>
@@ -44,8 +44,8 @@ export function BlogSettings({ savedUrl, postCount, connected, onSave }: Props) 
    {feedback && <div role={feedback.error ? 'alert' : 'status'}><Notice tone={feedback.error ? 'warning' : 'success'}>{feedback.text}</Notice></div>}
   </form>
   {savedUrl && <p className="saved-blog-address">저장된 주소: <strong>{savedUrl}</strong></p>}
-  <Notice>{connected ? '현재 글쓰기 화면과 연결되어 있어요.' : '현재 글쓰기 화면과 연결되지 않았어요. 주소 저장과 별도로 편집기 연결 확인이 필요해요.'} 주소를 저장하면 내 글 검색 범위가 설정돼요. 게시글을 개별 등록할 필요는 없어요.</Notice>
+  <Notice>{connected ? '현재 글쓰기 화면과 연결되어 있어요.' : '현재 글쓰기 화면과 연결되지 않았어요. 주소 저장과 별도로 편집기 연결 확인이 필요해요.'} 주소를 저장하면 내 글 탭에 진입할 때 최근 글을 불러와요. 게시글을 개별 등록할 필요는 없어요.</Notice>
   <div className="storage-summary"><BookOpen size={24}/><div><strong>{postCount}개 글</strong><span>이 PC에 저장된 내 글 자료</span></div></div>
-  <Notice>‘블로그 검색’은 네이버의 내 블로그 검색 결과를 불러와요. ‘저장한 글’에서는 이 PC의 제목·태그·원문 발췌로 검색과 추천을 이용해요.</Notice>
+  <Notice>‘블로그 검색’은 최근 공개 글과 최신순 검색 결과를 보여줘요. 새로고침을 누르면 최근 글을 다시 불러와요. ‘저장한 글’에서는 이 PC의 제목·태그·원문 발췌로 검색과 추천을 이용해요.</Notice>
  </>;
 }

@@ -29,7 +29,7 @@ async function setup(frames = [{id: 1, editable: true}]) {
     commands: {onCommand: {addListener: onCommand}},
   });
   await import('../src/background');
-  const command = onCommand.mock.calls[0][0] as (name: string) => Promise<void>;
+  const command = onCommand.mock.calls[0][0] as (name: string, tab?: chrome.tabs.Tab) => Promise<void>;
   return {db, command, send, notify, query};
 }
 
@@ -70,6 +70,22 @@ describe('registered extension shortcut commands', () => {
     const requests = api.send.mock.calls.filter(([, message]) => message.request.type === 'format');
     expect(requests.map(([, message]) => message.request.type === 'format' && message.request.preset.id)).toEqual(['body', 'emphasis']);
     expect(requests[1][1].request).toMatchObject({preset: {format: {color: '#456789'}}});
+  });
+
+  it('keeps the shortcut on its originating tab when another window becomes current', async () => {
+    const api = await setup();
+    api.query.mockResolvedValue([{id: 20, url: 'https://example.com/'}]);
+    await api.command('apply-preset-3', {id: 10, windowId: 77, url: 'https://blog.naver.com/PostWriteForm.naver'} as chrome.tabs.Tab);
+    expect(api.query).not.toHaveBeenCalled();
+    expect(api.send).toHaveBeenLastCalledWith(10, {type: 'EDITOR', request: {type: 'format', preset: api.db.presets.find(p => p.id === 'emphasis')}}, {frameId: 1});
+    expect(api.notify).toHaveBeenCalledWith({type: 'SHORTCUT_RESULT', response: applied, windowId: 77});
+  });
+
+  it('never redirects a shortcut from an unrelated originating tab into an editor', async () => {
+    const api = await setup();
+    await api.command('apply-preset-3', {id: 20, windowId: 77, url: 'https://example.com/'} as chrome.tabs.Tab);
+    expect(api.query).not.toHaveBeenCalled();
+    expect(api.send).not.toHaveBeenCalled();
   });
 
   it('does not edit for unassigned, deleted, or unrelated commands', async () => {

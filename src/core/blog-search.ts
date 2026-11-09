@@ -20,7 +20,7 @@ export function normalizeBlogSearchRequest(value: { blogUrl: unknown; query: unk
 export function blogSearchUrl(request: BlogSearchRequest): string {
  const { blogUrl, query, page } = normalizeBlogSearchRequest(request);
  const url = new URL('https://blog.naver.com/PostSearchList.naver');
- url.search = new URLSearchParams({ blogId: blogUrl.split('/').at(-1)!, categoryNo: '0', SearchText: query, orderBy: 'sim', range: 'all', cpage: String(page) }).toString();
+ url.search = new URLSearchParams({ blogId: blogUrl.split('/').at(-1)!, categoryNo: '0', SearchText: query, orderBy: 'date', range: 'all', cpage: String(page) }).toString();
  return url.href;
 }
 
@@ -28,7 +28,7 @@ export function assertBlogSearchUrl(input: string, request: BlogSearchRequest): 
  const url = new URL(input), expected = new URL(blogSearchUrl(request));
  if (url.origin !== expected.origin || url.username || url.password || url.pathname !== expected.pathname ||
      url.searchParams.get('blogId') !== expected.searchParams.get('blogId') || url.searchParams.get('SearchText') !== request.query ||
-     Number(url.searchParams.get('cpage') ?? '1') !== request.page) {
+     Number(url.searchParams.get('cpage') ?? '1') !== request.page || url.searchParams.get('orderBy') !== 'date') {
   throw new Error('내 블로그 검색 결과를 확인하지 못했어요. 다시 검색해 주세요.');
  }
 }

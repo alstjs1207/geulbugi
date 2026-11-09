@@ -2,11 +2,16 @@ import { NativeAdapter } from './editor/native-adapter';
 import type { EditorRequest } from './core/types';
 import { canonicalPost } from './core/security';
 import { readPostDocument } from './core/post-document';
+import { fetchBlogCategoryWidget } from './platform/blog-search-fetch';
 const adapter=new NativeAdapter();
 let registered=false;
 async function announce(){const s=await adapter.snapshot();if(!adapter.reader.getRoot())return;try{await chrome.runtime.sendMessage({type:'REGISTER_FRAME',editable:s.editable,url:location.href});registered=true;}catch{ /* Extension reloaded: page refresh reattaches content script. */ }}
 adapter.reader.onChange=()=>{if(!registered){void announce().catch(()=>{});return;}try{void chrome.runtime.sendMessage({type:'EDITOR_CHANGED'}).catch(()=>{});}catch{ /* Old tabs can outlive the reloaded extension context. */ }};
 chrome.runtime.onMessage.addListener((message,_sender,sendResponse)=>{
+ if(message?.type==='BLOG_CATEGORIES_HTML'){
+  if(_sender.id!==chrome.runtime.id||window.top!==window)return false;
+  void fetchBlogCategoryWidget(message.blogUrl).then(result=>sendResponse({ok:true,...result})).catch(error=>sendResponse({ok:false,error:error instanceof Error?error.message:'카테고리를 불러오지 못했어요.'}));return true;
+ }
  if(message?.type==='EDITOR'){
   if(!adapter.reader.getRoot())return false;
   void adapter.handle(message.request as EditorRequest).then(sendResponse).catch(error=>sendResponse({ok:false,error:error instanceof Error?error.message:'편집기 응답을 확인하지 못했어요.'}));return true;

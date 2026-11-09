@@ -7,6 +7,34 @@ import { canonicalPost, validatePost } from '../core/security';
 import { readPostDocument } from '../core/post-document';
 import { assertBlogSearchUrl, normalizeBlogSearchRequest, readBlogSearchDocument, type BlogSearchResult } from '../core/blog-search';
 import {PHOTO_AI_RECONNECT,PUBLISH_TIME_RECONNECT,isUnsupportedEditorRequest} from '../core/editor-capabilities';
+import { assertRecentBlogUrl, readRecentBlogDocument, recentBlogUrl, RECENT_BLOG_LIMIT, RECENT_BLOG_PAGE_LIMIT, type RecentBlogPost, type RecentBlogResult } from '../core/blog-recent';
+import { assertBlogCategoryWidgetUrl, categoryWidgetHtml, normalizeCategoryNo, readBlogCategories, type BlogCategory } from '../core/blog-categories';
+export async function loadBlogCategories(blogUrl:string):Promise<BlogCategory[]>{
+ recentBlogUrl(blogUrl);
+ if(!isExtension())throw new Error('카테고리 조회는 설치된 글부기에서 사용할 수 있어요.');
+ const windowId=(await chrome.windows.getCurrent()).id;
+ const response=await chrome.runtime.sendMessage({type:'BLOG_CATEGORIES',blogUrl,windowId});
+ if(!response?.ok)throw new Error(response?.error??'네이버 글쓰기 탭을 선택하고 카테고리를 다시 불러와 주세요.');
+ if(typeof response.html!=='string'||typeof response.url!=='string')throw new Error('카테고리 목록을 확인하지 못했어요. 다시 불러와 주세요.');
+ assertBlogCategoryWidgetUrl(response.url,blogUrl);
+ return readBlogCategories(new DOMParser().parseFromString(categoryWidgetHtml(response.html),'text/html'),blogUrl);
+}
+export async function loadRecentBlog(blogUrl:string,categoryNo='0'):Promise<RecentBlogResult>{
+ categoryNo=normalizeCategoryNo(categoryNo);recentBlogUrl(blogUrl,1,categoryNo);
+ if(!isExtension())throw new Error('최근 글 조회는 설치된 확장 프로그램에서 사용할 수 있어요.');
+ const posts=new Map<string,RecentBlogPost>();
+ for(let page=1;page<=RECENT_BLOG_PAGE_LIMIT;page++){
+  const response=await chrome.runtime.sendMessage({type:'RECENT_OWN_BLOG',blogUrl,page,...(categoryNo==='0'?{}:{categoryNo})});
+  if(!response?.ok)throw new Error(response?.error??'최근 글을 가져오지 못했어요. 새로고침해 주세요.');
+  if(typeof response.html!=='string'||typeof response.url!=='string')throw new Error('최근 글 목록을 확인하지 못했어요. 새로고침해 주세요.');
+  assertRecentBlogUrl(response.url,blogUrl,page,categoryNo);
+  const next=readRecentBlogDocument(new DOMParser().parseFromString(response.html,'text/html'),blogUrl,page,categoryNo),previousSize=posts.size;
+  for(const post of next.posts)if(!posts.has(post.url))posts.set(post.url,post);
+  if(posts.size>=RECENT_BLOG_LIMIT||!next.hasMore)return {blogUrl:next.blogUrl,posts:[...posts.values()].slice(0,RECENT_BLOG_LIMIT)};
+  if(posts.size===previousSize)throw new Error('다음 최근 글 목록을 확인하지 못했어요. 새로고침해 주세요.');
+ }
+ throw new Error('최근 글 목록을 모두 확인하지 못했어요. 새로고침해 주세요.');
+}
 export async function searchOwnBlog(blogUrl:string,query:string,page=1):Promise<BlogSearchResult>{
  const request=normalizeBlogSearchRequest({blogUrl,query,page});
  if(!isExtension())throw new Error('내 글 검색은 설치된 확장 프로그램에서 사용할 수 있어요.');

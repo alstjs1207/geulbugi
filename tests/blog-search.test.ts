@@ -15,7 +15,7 @@ describe('public in-blog search', () => {
   expect(normalized).toEqual({ blogUrl: ownBlog, query: '연애 & blogId=foreign_blog', page: 2 });
   expect(url.origin).toBe('https://blog.naver.com'); expect(url.pathname).toBe('/PostSearchList.naver');
   expect(url.searchParams.get('blogId')).toBe('example_blog'); expect(url.searchParams.get('SearchText')).toBe(normalized.query);
-  expect(url.searchParams.get('cpage')).toBe('2'); expect(url.searchParams.get('range')).toBe('all');
+  expect(url.searchParams.get('orderBy')).toBe('date'); expect(url.searchParams.get('cpage')).toBe('2'); expect(url.searchParams.get('range')).toBe('all');
  });
  it.each(['', '   ', 'a'.repeat(121), '연애\u0000'])('rejects empty, oversized or invalid queries: %s', query => expect(() => normalizeBlogSearchRequest({ ...request, query })).toThrow());
  it.each([0, -1, 1.5, 1001, '2', NaN])('rejects invalid pages: %s', page => expect(() => normalizeBlogSearchRequest({ ...request, page })).toThrow());
@@ -24,6 +24,15 @@ describe('public in-blog search', () => {
   expect(result).toMatchObject({ ...request, total: 216, hasMore: true });
   expect(result.posts[0]).toMatchObject({ blogId: 'example_blog', postId: '10001', url: ownBlog + '/10001', title: '“우리 사이” 연애 & 대화', tags: [], excerpt: '연애 발췌입니다.', publishedAt: '2026-07-24' });
   expect(result.posts[0].excerpt).not.toContain('카테고리');
+ });
+ it('keeps the server’s latest-first order even when multiple posts share a date', () => {
+  expect(parse(resultHtml([{ id: '10002', date: '2026/10/28 17:51' }, { id: '10001', date: '2026/10/28 09:00' }, { id: '9999', date: '2026/10/27 23:16' }])).posts.map(post => post.postId)).toEqual(['10002', '10001', '9999']);
+ });
+ it('requires latest-first sorting in response URLs', () => {
+  const url = blogSearchUrl(request);
+  expect(() => assertBlogSearchUrl(url, request)).not.toThrow();
+  expect(() => assertBlogSearchUrl(url.replace('orderBy=date', 'orderBy=sim'), request)).toThrow();
+  expect(() => assertBlogSearchUrl(url.replace('&orderBy=date', ''), request)).toThrow();
  });
  it('accepts zero results only when the public result heading confirms zero', () => {
   expect(parse(resultHtml([]))).toMatchObject({ posts: [], total: 0, hasMore: false });
@@ -48,7 +57,7 @@ describe('public in-blog search', () => {
   expect(parse(resultHtml([{ id: '1', date: '3시간 전' }, { id: '2', date: '2026/02/30' }])).posts.map(post => post.publishedAt)).toEqual(['', '']);
  });
  it('reads a public next-page link and stops on the last page', () => {
-  const html = resultHtml([{ id: '10001' }], 11).concat('<a href="/PostSearchList.naver?blogId=example_blog&SearchText=%EC%97%B0%EC%95%A0&cpage=2">2</a>');
+  const html = resultHtml([{ id: '10001' }], 11).concat('<a href="/PostSearchList.naver?blogId=example_blog&SearchText=%EC%97%B0%EC%95%A0&orderBy=date&cpage=2">2</a>');
   expect(parse(html).hasMore).toBe(true);
   expect(parse(resultHtml([{ id: '10002' }], 11), 2).hasMore).toBe(false);
  });
@@ -57,7 +66,7 @@ describe('public in-blog search', () => {
   'https://blog.naver.com/PostSearchList.naver?blogId=foreign_blog&SearchText=%EC%97%B0%EC%95%A0',
   'https://blog.naver.com/PostSearchList.naver?blogId=example_blog&SearchText=another',
   'https://blog.naver.com/PostSearchList.naver?blogId=example_blog&SearchText=%EC%97%B0%EC%95%A0&cpage=2'
- ])('rejects a response URL outside the requested search: %s', url => expect(() => assertBlogSearchUrl(url, request)).toThrow());
+ ])('rejects a response URL outside the requested search: %s', url => expect(() => assertBlogSearchUrl(url + '&orderBy=date', request)).toThrow());
  it('uses the search bridge without writing registration data or contacting the editor', async () => {
   const sendMessage = vi.fn(async () => ({ ok: true, html: resultHtml([{ id: '10001' }], 216, 2), url: blogSearchUrl(request) }));
   vi.stubGlobal('chrome', { runtime: { id: 'test-extension', sendMessage } });

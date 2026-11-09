@@ -1,6 +1,6 @@
 {
   "name": "geulbugi",
-  "version": "1.0.2",
+  "version": "1.1.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,7 +12,9 @@
     "package": "node scripts/package.mjs",
     "verify": "node scripts/verify-package.mjs",
     "release": "npm run check && npm test && npm run build && npm run verify && npm run package",
-    "store:verify": "node scripts/verify-store.mjs"
+    "store:verify": "node scripts/verify-store.mjs",
+    "spec": "openspec",
+    "spec:check": "openspec validate --all --strict --no-interactive"
   },
   "dependencies": {
     "lucide-react": "^1.52.0",
@@ -20,6 +22,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@fission-ai/openspec": "1.15.0",
     "@types/chrome": "^0.3.4",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",

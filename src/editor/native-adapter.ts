@@ -9,12 +9,13 @@ import {PublishTimeUI} from './publish-time';
 import {validatePublishTime} from '../core/schedule';
 import { blockSignature } from '../core/hash';
 import {applyNativeLinebreaks} from './linebreak';
-import {PendingNativeEditError} from './native-operation';
+import {PendingNativeEditError,waitNativeRevision} from './native-operation';
 import {withinUndoBoundary} from './undo-boundary';
 import { loadDatabase } from '../platform/storage';
 import { canonicalPost, validatePost } from '../core/security';
 import {assertNaverFormat} from '../core/naver-format-options';
 import {loadCardReferences,saveCardReference} from '../platform/link-card-cache';
+const FORMAT_MODIFIER_KEYS=new Set(['Control','Shift','Alt','Meta','AltGraph']);
 export class NativeAdapter {
  private busy=false;
  private undoCount=0;
@@ -106,6 +107,7 @@ export class NativeAdapter {
  async handle(request:EditorRequest):Promise<EditorResponse>{
   let before:Snapshot|undefined;let mutating=false,ownsBusy=false;
   let photoMoveInterrupted=false,linebreakInterrupted=false,formatInterrupted=false,linkInterrupted=false,formatGuard:(()=>void)|undefined,releaseMutationGuard:(()=>void)|undefined;
+  let formatPointerOnly=true;
   let previousJournal:{ai:boolean;count:number;before:string|null;expected:string|null;baseline:Snapshot|null}|undefined;
   try{
    if(!['snapshot','focus','format','link','photo-add','photo-move','photo-add-cancel','linebreak','undo','publish-time','photo-ai-on'].includes(request.type))throw new Error('지원하지 않는 편집 요청이에요.');
@@ -196,7 +198,16 @@ export class NativeAdapter {
     }
     case 'format':{
      const docs=[document,...[...document.querySelectorAll<HTMLIFrameElement>('iframe[id^="input_buffer"]')].flatMap(frame=>{try{return frame.contentDocument?[frame.contentDocument]:[];}catch{return [];}})];
-     const interaction=(event:Event)=>{if(event.isTrusted)formatInterrupted=true;};
+     const interaction=(event:Event)=>{
+      if(!event.isTrusted)return;
+      // Chrome consumes an extension shortcut's main key, but the preceding
+      // modifier keydown can reach Naver while the previous format settles.
+      // Modifiers alone change neither text nor selection. The next character,
+      // navigation key, composition, pointer, paste or cut still stops the edit.
+      if(event.type==='keydown'&&FORMAT_MODIFIER_KEYS.has((event as KeyboardEvent).key))return;
+      if(event.type!=='mousedown'&&event.type!=='touchstart')formatPointerOnly=false;
+      formatInterrupted=true;
+     };
      const events=['mousedown','keydown','touchstart','compositionstart','paste','cut'];
      for(const doc of docs)for(const type of events)doc.addEventListener(type,interaction,true);
      releaseMutationGuard=()=>{for(const doc of docs)for(const type of events)doc.removeEventListener(type,interaction,true);};
@@ -288,6 +299,26 @@ export class NativeAdapter {
    return {ok:true,snapshot:after};
   }catch(error){
    if(request.type==='format'&&formatGuard)try{formatGuard();}catch(guardError){error=guardError;}
+   if(request.type==='format'&&before&&formatInterrupted&&formatPointerOnly&&this.undoCount>0){
+    // A body click can arrive after the last toolbar action changed the DOM,
+    // but before its settling wait completes. Stop issuing tools immediately;
+    // only observe the result against the ORIGINAL selection, never the new
+    // caret. A partial format or any direct editing still needs recovery.
+    const original=before;
+    const verifyCompleted=()=>{
+     const current=this.reader.read();
+     if(!formatPointerOnly||current.sessionId!==original.sessionId||current.documentKey!==original.documentKey||current.title!==original.title||!current.editable||current.uploadBusy||current.mediaPending||current.revision===original.revision)throw error;
+     if(this.photos(current.blocks)!==this.photos(original.blocks))throw error;
+     verifyPostconditions(original,current,request);
+    };
+    try{
+     verifyCompleted();
+     await waitNativeRevision(this.reader,original,verifyCompleted,'서식 적용 결과가 아직 안정되지 않았어요.');
+     this.reader.captureSelection();const after=await this.snapshot();verifyCompleted();
+     this.undoExpected=after.revision;after.canUndo=this.undoCount>0;
+     return {ok:true,snapshot:after};
+    }catch{ /* Preserve the existing recovery path if the complete result is uncertain. */ }
+   }
    let message=error instanceof Error?error.message:String(error);
    const uncertainLinebreak=request.type==='linebreak'&&(error instanceof PendingNativeLinebreakError||linebreakInterrupted);
    if(error instanceof PendingNativeEditError||(formatInterrupted||uncertainLinebreak)&&this.undoCount>0){this.unsafe=true;this.unsafeIssue=message+' 복구 안내에서 원고와 현재 설정을 확인하고 임시저장해 주세요.';message=this.unsafeIssue;}

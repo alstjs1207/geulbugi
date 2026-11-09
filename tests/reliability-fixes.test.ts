@@ -15,6 +15,8 @@ const selectedSpan=()=>document.querySelector<HTMLElement>('p span')!;
 const content=()=>document.querySelector<HTMLElement>('.se-main-container')!;
 beforeEach(async()=>{
  vi.useFakeTimers();
+ // Keep the fixed November 2 reservation fixtures in the future on every run.
+ vi.setSystemTime(new Date('2026-10-30T00:00:00Z'));
  const values=new Map<string,string>();vi.stubGlobal('localStorage',{getItem:(key:string)=>values.get(key)??null,setItem:(key:string,value:string)=>values.set(key,value)});
  vi.stubGlobal('location',{href:'https://blog.naver.com/PostWriteForm.naver?blogId=example_blog',pathname:'/PostWriteForm.naver'});
  document.body.style.color='#000000';document.title='';
@@ -31,6 +33,44 @@ function boldButton(delay=0){
  const b=document.createElement('button');b.setAttribute('aria-label','굵기 적용');document.body.append(b);
  b.addEventListener('click',()=>{const apply=()=>{selectedSpan().style.fontWeight=selectedSpan().style.fontWeight==='700'?'400':'700';};if(delay)setTimeout(apply,delay);else apply();});return b;
 }
+
+it.each(['Control','Shift','Alt','Meta'])('does not mistake the next shortcut modifier %s for direct editing',async key=>{
+ const a=adapter(),add=vi.spyOn(document,'addEventListener'),before=await a.snapshot();
+ vi.spyOn(PublicEditorUI.prototype,'format').mockImplementation(async function(this:PublicEditorUI){
+  selectedSpan().style.fontWeight='700';(this as unknown as {didEdit:()=>void}).didEdit();
+  const guard=add.mock.calls.find(([type])=>type==='keydown')![1] as EventListener;
+  guard({isTrusted:true,type:'keydown',key,code:key+'Left',ctrlKey:key==='Control',shiftKey:key==='Shift',altKey:key==='Alt',metaKey:key==='Meta'} as unknown as KeyboardEvent);
+ });
+ expect(await finish(a.handle({type:'format',preset}))).toMatchObject({ok:true,snapshot:{canUndo:true}});
+ expect((await a.snapshot()).issue).toBeUndefined();expect(selectedSpan().textContent).toBe(before.blocks[0].text);
+});
+
+it('keeps an in-flight format healthy when a shortcut modifier and a busy second request overlap in the input frame',async()=>{
+ const frame=document.createElement('iframe');frame.id='input_buffer_shortcuts';document.body.append(frame);const doc=frame.contentDocument!;doc.body.setAttribute('contenteditable','true');
+ const a=adapter(),add=vi.spyOn(doc,'addEventListener');let finishFormat!:()=>void;
+ vi.spyOn(PublicEditorUI.prototype,'format').mockImplementation(async function(this:PublicEditorUI){
+  selectedSpan().style.fontWeight='700';(this as unknown as {didEdit:()=>void}).didEdit();await new Promise<void>(resolve=>{finishFormat=resolve;});
+ });
+ const first=a.handle({type:'format',preset});await vi.advanceTimersByTimeAsync(0);
+ const guard=add.mock.calls.find(([type])=>type==='keydown')![1] as EventListener;
+ guard({isTrusted:true,type:'keydown',key:'Control',code:'ControlLeft',ctrlKey:true} as unknown as KeyboardEvent);
+ expect(await a.handle({type:'format',preset:{...preset,format:{bold:false}}})).toEqual({ok:false,error:'진행 중인 작업이 끝날 때까지 기다려 주세요.'});
+ finishFormat();expect(await finish(first)).toMatchObject({ok:true,snapshot:{canUndo:true}});
+ expect((await a.snapshot()).issue).toBeUndefined();expect(PublicEditorUI.prototype.format).toHaveBeenCalledOnce();
+});
+
+it.each(['ArrowLeft','Backspace','a'])('still stops a format for a real edit or caret movement after modifiers: %s',async key=>{
+ const a=adapter(),add=vi.spyOn(document,'addEventListener'),undo=vi.spyOn(PublicEditorUI.prototype,'undo');
+ vi.spyOn(PublicEditorUI.prototype,'format').mockImplementation(async function(this:PublicEditorUI){
+  selectedSpan().style.fontWeight='700';(this as unknown as {didEdit:()=>void}).didEdit();
+  const guard=add.mock.calls.find(([type])=>type==='keydown')![1] as EventListener;
+  guard({isTrusted:true,type:'keydown',key:'Shift',shiftKey:true} as unknown as KeyboardEvent);
+  guard({isTrusted:true,type:'keydown',key,shiftKey:true} as unknown as KeyboardEvent);
+  if(key==='a')selectedSpan().textContent='사용자가 새로 입력한 본문';
+ });
+ expect(await finish(a.handle({type:'format',preset}))).toMatchObject({ok:false,recoveryRequired:true});
+ expect(undo).not.toHaveBeenCalled();if(key==='a')expect(selectedSpan().textContent).toBe('사용자가 새로 입력한 본문');
+});
 
 it('fix 1: waits for delayed native undo and preserves earlier formatting',async()=>{
  const a=adapter(),before=await a.snapshot(),originalWeight=selectedSpan().style.fontWeight;

@@ -1,8 +1,8 @@
 import {RecoveryBanner,EditorRecoveryDialog} from './EditorRecovery';
 import {PhotoAiControls} from './PhotoAiControls';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CalendarClock, Type, BookOpen, Image, WrapText, Settings as SettingsIcon, Plus, Search, ArrowUpRight, Link2, Check, RefreshCw, Undo2, ChevronDown, ChevronRight, Upload, Download, Quote, AlignLeft, AlignCenter, AlignRight, Bold, FileJson, Keyboard, ShieldCheck, ExternalLink, ArrowDown, LayoutPanelLeft, CheckCircle2, X } from 'lucide-react';
-import type { Database, Snapshot, TabName, Preset, EditorRequest, BreakPlan, Post, Backup, QuoteStyle } from '../core/types';
+import type { Database, Snapshot, TabName, Preset, EditorRequest, EditorResponse, BreakPlan, Post, Backup, QuoteStyle } from '../core/types';
 import { loadDatabase, saveDatabase, saveBlogAddress, isExtension } from '../platform/storage';
 import { editorRequest, capturePost, fetchPost, openShortcuts, openExtensionManager } from '../platform/bridge';
 import { demoEditor, demoPosts } from '../platform/demo';
@@ -42,29 +42,46 @@ export function App(){
  const [plan,setPlan]=useState<BreakPlan|null>(null),[selectedChanges,setSelectedChanges]=useState<Set<string>>(new Set()),[pendingBackup,setPendingBackup]=useState<Backup|null>(null),[replaceSettings,setReplaceSettings]=useState(false);
  const fileInput=useRef<HTMLInputElement>(null),saveQueue=useRef<Promise<void>>(Promise.resolve());
  const latestSnapshot=useRef(snapshot);latestSnapshot.current=snapshot;
+ const snapshotSerial=useRef(0);
  const panelBody=useRef<HTMLDivElement>(null);
+ useLayoutEffect(()=>{if(panelBody.current)panelBody.current.scrollTop=0;},[tab]);
  useEffect(()=>{if(snapshot?.issue||recoveryLock)panelBody.current?.scrollTo?.({top:0});},[snapshot?.issue,recoveryLock]);
  const [cursorJump,setCursorJump]=useState(0);
  const demo=!isExtension(),optionsPage=location.pathname.endsWith('options.html');
  const extensionVersion=!demo?chrome.runtime.getManifest?.()?.version:undefined;
  const previewWorkspace=demo&&!optionsPage&&!location.pathname.endsWith('sidepanel.html');
  const notify=useCallback((text:string,error=false)=>setToast({text,error}),[]);
- const refresh=useCallback(async(retryMedia=false)=>{const result=await editorRequest({type:'snapshot',retryMedia});if(result?.ok){setSnapshot(result.snapshot);setConnection('');}else {setSnapshot(null);setConnection(result?.error??'편집기에 연결되지 않았어요.');}},[]);
+ // A delayed poll must not replace a newer read or a confirmed edit result.
+ const refresh=useCallback(async(retryMedia=false)=>{const serial=++snapshotSerial.current;const result=await editorRequest({type:'snapshot',retryMedia});if(serial!==snapshotSerial.current)return;if(result?.ok){setSnapshot(result.snapshot);setConnection('');}else {setSnapshot(null);setConnection(result?.error??'편집기에 연결되지 않았어요.');}},[]);
+ useEffect(()=>()=>{snapshotSerial.current++;},[]);
  useEffect(()=>{void loadDatabase().then(setDb).catch(e=>notify(errorText(e),true));void refresh();},[refresh,notify]);
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(null),6000);return()=>clearTimeout(timer);},[toast]);
  useEffect(()=>{
   if(demo)return;
   let refreshTimer:ReturnType<typeof setTimeout>;
-  const listener=(message:{type:string;response?:{ok:boolean;error?:string}})=>{if(message.type==='PANEL_REFRESH'){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>void refresh(),500);}if(message.type==='SHORTCUT_RESULT'){notify(message.response?.ok?'단축키로 서식을 적용했어요.':message.response?.error??'단축키를 실행하지 못했어요.',!message.response?.ok);void refresh();}};
+  let active=true;
+  const shortcutResult=(response?:EditorResponse)=>{
+    clearTimeout(refreshTimer);snapshotSerial.current++;
+    notify(response?.ok?'단축키로 서식을 적용했어요.':response?.error??'단축키를 실행하지 못했어요.',!response?.ok);
+    if(response?.ok){setSnapshot(response.snapshot);setConnection('');}
+    else {if(response?.recoveryRequired)setRecoveryLock({sessionId:latestSnapshot.current?.sessionId,message:response.error});void refresh();}
+  };
+  const listener=(message:{type:string;response?:EditorResponse;windowId?:number})=>{
+   if(message.type==='PANEL_REFRESH'){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>void refresh(),500);}
+   if(message.type==='SHORTCUT_RESULT'){
+    if(message.windowId===undefined)shortcutResult(message.response);
+    else void chrome.windows.getCurrent().then(window=>{if(active&&window.id===message.windowId)shortcutResult(message.response);}).catch(()=>{});
+   }
+  };
   const stored=()=>{void loadDatabase().then(setDb).catch(e=>notify(errorText(e),true));};
   chrome.runtime.onMessage.addListener(listener);chrome.storage.onChanged.addListener(stored);
   const interval=setInterval(()=>void refresh(),5000);
-  return()=>{clearTimeout(refreshTimer);clearInterval(interval);chrome.runtime.onMessage.removeListener(listener);chrome.storage.onChanged.removeListener(stored);};
+  return()=>{active=false;clearTimeout(refreshTimer);clearInterval(interval);chrome.runtime.onMessage.removeListener(listener);chrome.storage.onChanged.removeListener(stored);};
  },[demo,refresh,notify]);
  useEffect(()=>{if(!snapshot)return;if(!snapshot.blocks.some(b=>b.id===photoId))setPhotoId(snapshot.blocks.find(b=>b.kind==='photo')?.id??'');if(!snapshot.blocks.some(b=>b.id===targetId)){const id=(snapshot.blocks.some(b=>b.id===snapshot.selection?.blockId&&['paragraph','heading'].includes(b.kind))?snapshot.selection?.blockId:undefined)??snapshot.blocks.find(b=>['paragraph','heading'].includes(b.kind))?.id??'';setTargetId(id);const g=groupBlocks(snapshot.blocks).find(group=>group.blocks.some(b=>b.id===id));if(g)setExpanded(new Set([g.id]));}},[snapshot,photoId,targetId]);
 
  const save=useCallback((update:(current:Database)=>Database)=>{const task=saveQueue.current.catch(()=>{}).then(async()=>{try{const current=await loadDatabase(),next=update(structuredClone(current));await saveDatabase(next,current);setDb(await loadDatabase());}catch(e){notify(errorText(e),true);throw e;}});saveQueue.current=task;return task;},[notify]);
- const execute=useCallback(async(request:EditorRequest,success:string)=>{const before=latestSnapshot.current;setBusy(true);try{const r=await editorRequest(request);if(!r.ok){if(r.recoveryRequired)setRecoveryLock({sessionId:before?.sessionId,message:r.error});throw new Error(r.error);}if(request.type==='photo-move'&&before){const target=movedPhotoTarget(before,r.snapshot,request.targetId);if(target){setTargetId(target);setExpanded(new Set(groupBlocks(r.snapshot.blocks).filter(group=>group.blocks.some(block=>block.id===target)).map(group=>group.id)));}}setSnapshot(r.snapshot);if(request.type==='focus'&&!isExtension())document.querySelector<HTMLElement>('[data-demo-block="'+CSS.escape(request.blockId)+'"]')?.scrollIntoView({block:'center',behavior:'smooth'});notify(r.unchanged?request.type==='photo-ai-on'?'모든 사진의 AI 활용 설정이 이미 켜져 있어요.':request.type==='photo-move'?'사진이 이미 지정한 위치에 있어요.':'선택 영역에 이미 같은 서식이 적용되어 있어요.':success);return true;}catch(e){notify(errorText(e),true);await refresh();return false;}finally{setBusy(false);}},[notify,refresh]);
+ const execute=useCallback(async(request:EditorRequest,success:string)=>{const before=latestSnapshot.current;snapshotSerial.current++;setBusy(true);try{const r=await editorRequest(request);if(!r.ok){if(r.recoveryRequired)setRecoveryLock({sessionId:before?.sessionId,message:r.error});throw new Error(r.error);}if(request.type==='photo-move'&&before){const target=movedPhotoTarget(before,r.snapshot,request.targetId);if(target){setTargetId(target);setExpanded(new Set(groupBlocks(r.snapshot.blocks).filter(group=>group.blocks.some(block=>block.id===target)).map(group=>group.id)));}}snapshotSerial.current++;setSnapshot(r.snapshot);setConnection('');if(request.type==='focus'&&!isExtension())document.querySelector<HTMLElement>('[data-demo-block="'+CSS.escape(request.blockId)+'"]')?.scrollIntoView({block:'center',behavior:'smooth'});notify(r.unchanged?request.type==='photo-ai-on'?'모든 사진의 AI 활용 설정이 이미 켜져 있어요.':request.type==='photo-move'?'사진이 이미 지정한 위치에 있어요.':'선택 영역에 이미 같은 서식이 적용되어 있어요.':success);return true;}catch(e){notify(errorText(e),true);await refresh();return false;}finally{setBusy(false);}},[notify,refresh]);
  const selectedPreset=db?.presets.find(p=>p.id===presetId)??db?.presets[0];
  let displaySelection=snapshot?.selection;
  if(tab==='format'&&selectedPreset?.format.paragraphStyle==='quote'&&snapshot){try{displaySelection=quoteTarget(snapshot);}catch{displaySelection=null;}}
@@ -117,7 +134,7 @@ export function App(){
      <div className="preset-preview"><small>미리보기</small>{selectedPreset.format.paragraphStyle==='quote'?<QuotePreview quoteStyle={resolveQuoteStyle(selectedPreset.format,selectionBlock)}><p style={{whiteSpace:'pre-wrap',fontSize:selectedPreset.format.fontSize??16,color:selectedPreset.format.color,fontWeight:selectedPreset.format.bold===undefined?undefined:selectedPreset.format.bold?700:400}}>{displaySelection?.text.slice(0,80)||'천천히 걸어도 충분히 좋은 하루예요.'}</p></QuotePreview>:<p style={{whiteSpace:'pre-wrap',fontSize:selectedPreset.format.fontSize??16,color:selectedPreset.format.color,fontWeight:selectedPreset.format.bold?700:400,backgroundColor:selectedPreset.format.background,textAlign:selectedPreset.format.align}}>{selection?.text.slice(0,80)||'천천히 걸어도 충분히 좋은 하루예요.'}</p>}</div>
     </>}
    </>}
-   <div hidden={tab!=='posts'}><OwnPostsPanel blogUrl={db.settings.blogUrl} posts={db.posts} keywords={keywords} linkedUrls={snapshot?.linkedUrls??[]} busy={busy} canInsert={canEdit&&!!selection?.valid&&selection.collapsed} demo={demo} onInsert={post=>void execute({type:'link',post},'링크 미리보기 카드를 삽입했어요.')} onSettings={settings} onRegister={()=>setShowRegister(true)} onOpened={()=>void registerOpened()} onImport={()=>fileInput.current?.click()} onDemo={()=>void seedDemo()}/></div>
+   <div hidden={tab!=='posts'}><OwnPostsPanel active={tab==='posts'} blogUrl={db.settings.blogUrl} posts={db.posts} keywords={keywords} linkedUrls={snapshot?.linkedUrls??[]} busy={busy} canInsert={canEdit&&!!selection?.valid&&selection.collapsed} demo={demo} onInsert={post=>void execute({type:'link',post},'링크 미리보기 카드를 삽입했어요.')} onSettings={settings} onRegister={()=>setShowRegister(true)} onOpened={()=>void registerOpened()} onImport={()=>fileInput.current?.click()} onDemo={()=>void seedDemo()}/></div>
    {tab==='photos'&&<>
     <PhotoAiControls snapshot={snapshot} busy={busy} onApply={execute} onReconnect={demo?undefined:()=>void openExtensionManager().catch(e=>notify(errorText(e),true))}/>
     <div className="section-title"><h2>사진 위치 정리</h2><PhotoUploadButton disabled={busy||!canEdit||!target} onUpload={files=>execute({type:'photo-add',targetId,placement,files,expected:{sessionId:snapshot!.sessionId,documentKey:snapshot!.documentKey,revision:snapshot!.revision}},'사진 '+files.length+'장을 네이버에 전달했어요. 업로드 완료를 기다려 주세요.')} onError={text=>notify(text,true)} onCancel={()=>notify('사진 선택을 취소했어요.')}/></div><p className="helper">위치를 선택하고 새 사진을 눌러 파일을 고르세요. 여러 사진은 개별 사진으로 순서대로 추가해요. 한 번에 20장·합계 20MB까지 선택할 수 있어요.</p>
