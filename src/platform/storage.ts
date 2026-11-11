@@ -1,13 +1,22 @@
 import type { Database } from '../core/types';
 import { defaultDatabase } from '../core/defaults';
-import { hydrateDatabase } from '../core/backup';
+import { validateSettings,validatePreset,hydrateDatabase } from '../core/backup';
 import { mergeDatabase } from '../core/merge-database';
+import {migrateDefaultColors} from '../core/naver-format-options';
 import { normalizeBlog } from '../core/security';
 export const STORAGE_KEY='naver-blog-helper:v1';
 export const isExtension=()=>typeof chrome!=='undefined'&&!!chrome.runtime?.id;
 export async function loadDatabase():Promise<Database>{
  const raw=isExtension()?(await chrome.storage.local.get(STORAGE_KEY))[STORAGE_KEY]:JSON.parse(localStorage.getItem(STORAGE_KEY)??'null');
  return raw?hydrateDatabase(raw):defaultDatabase();
+}
+// A command needs current settings/presets, not validation of every saved post.
+// Read storage on every invocation so edits in other panels take effect at once.
+export async function loadShortcutConfiguration():Promise<Pick<Database,'settings'|'presets'>>{
+ const raw=isExtension()?(await chrome.storage.local.get(STORAGE_KEY))[STORAGE_KEY]:JSON.parse(localStorage.getItem(STORAGE_KEY)??'null');
+ if(!raw)return defaultDatabase();
+ if(raw.schemaVersion!==1)throw new Error('지원하지 않는 저장 자료 버전이에요. 백업을 확인해 주세요.');
+ return {settings:validateSettings(raw.settings),presets:raw.presets.map(validatePreset).map(migrateDefaultColors)};
 }
 async function writeDatabase(db:Database):Promise<void>{
  const raw=JSON.stringify(db);

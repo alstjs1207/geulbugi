@@ -1,7 +1,7 @@
 # 글부기 OpenSpec
 
-기준일: 2026-11-10. 원본 `/Users/msyu/study/geulbugi`, 브랜치 `main`.
-현재 package·manifest·로컬 제출 자료는 **1.1.2**다. 사용자 확인에 따른 공개 버전 기록과 실제 대시보드 확인을 구분한다.
+기준일: 2026-11-11. 원본 `/Users/msyu/study/geulbugi`, 브랜치 `main`.
+현재 package·manifest·로컬 자료는 **1.2.1**이다. 프로필 글쓰기 자동 연결 수정본이며 1.2.1의 스토어 업로드·제출은 실행하지 않았다. 아래 대시보드 기록은 기존 1.2.0에 대한 이력이다. 2026-11-11 실제 대시보드에서 문구 저장·검토 제출을 완료했고 승인 후 자동 게시 설정을 확인했다. 현재 검토 대기 중이며 실제 공개 버전은 **1.1.2**다. 사용자 확인에 따른 공개 버전 기록과 실제 대시보드 확인을 구분한다.
 
 ## 읽는 순서
 
@@ -19,8 +19,10 @@
 
 ## 예정 작업
 
-- [게시 후 스토어 문구 동기화](changes/sync-store-materials-after-publication/proposal.md) · [진행 목록](changes/sync-store-materials-after-publication/tasks.md): 로컬 자료는 준비됐다. 사용자가 지정한 게시 확인 이후에만 대시보드 작업을 진행한다. 지금은 외부 반영을 하지 않는다.
+- [프로필 글쓰기 자동 연결](changes/fix-profile-write-connection/proposal.md): `/<blogId>/postwrite` 경로 인식과 등록 후 패널 갱신. [로컬 검증 기록](../docs/수정-프로필-글쓰기-자동연결-20261111.md). 기존 심사 패키지와 구분한다.
+- [스토어 문구 반영·게시 진행](changes/sync-store-materials-after-publication/proposal.md) · [진행 목록](changes/sync-store-materials-after-publication/tasks.md): 2026-11-11 최신 승인에 따라 1.2.0 문구 저장·검토 제출을 완료했다. 승인 후 자동 게시되며 실제 공개 확인이 남았다.
 - [확인 공백과 유지보수](known-gaps.md): 실제 환경 검증, 개발 도구 보안 업데이트, 배지 운영 기준을 관리한다. 검토만 한 항목을 구현 완료로 취급하지 않는다.
+- [개발 의존성 보안 업데이트 완료](../docs/보안-개발의존성-20261111.md): 2026-11-11 audit 0건·739개 테스트·기존 1.2.0 빌드 내용 동일 확인.
 - [이번 도입 근거](baseline-audit.md): Git 기준, 포함한 변경과 실행한 검사·한계.
 
 ## 일상 작업

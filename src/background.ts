@@ -1,5 +1,5 @@
 import {prepareEditorRecovery,reloadSavedEditor} from './platform/editor-recovery';
-import { loadDatabase, commitDatabaseDiff } from './platform/storage';
+import { loadDatabase, loadShortcutConfiguration, commitDatabaseDiff } from './platform/storage';
 import { canonicalPost, normalizeBlog, validatePost } from './core/security';
 import type { EditorRequest, EditorResponse } from './core/types';
 import { normalizeBlogSearchRequest } from './core/blog-search';
@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener((message,sender,sendResponse)=>{
  if(message?.type==='STORE_DATABASE_DIFF'&&sender.id===chrome.runtime.id){void commitDatabaseDiff(message.base,message.next).then(()=>sendResponse({ok:true})).catch(error=>sendResponse({ok:false,error:error.message}));return true;}
  if(message?.type==='REGISTER_FRAME'&&sender.tab?.id!==undefined){
   const key='frames:'+sender.tab.id;
-  registrations=registrations.catch(()=>{}).then(async()=>{const raw=await chrome.storage.session.get(key),frames=(raw[key]??[]) as Frame[];await chrome.storage.session.set({[key]:[...frames.filter(f=>f.id!==sender.frameId),{id:sender.frameId??0,editable:!!message.editable}]});sendResponse({ok:true});}).catch(error=>sendResponse({ok:false,error:error.message}));return true;
+  registrations=registrations.catch(()=>{}).then(async()=>{const raw=await chrome.storage.session.get(key),frames=(raw[key]??[]) as Frame[];await chrome.storage.session.set({[key]:[...frames.filter(f=>f.id!==sender.frameId),{id:sender.frameId??0,editable:!!message.editable}]});sendResponse({ok:true});void chrome.runtime.sendMessage({type:'PANEL_REFRESH'}).catch(()=>{});}).catch(error=>sendResponse({ok:false,error:error.message}));return true;
  }
  if(message?.type==='EDITOR_CHANGED'){void chrome.runtime.sendMessage({type:'PANEL_REFRESH'}).catch(()=>{});return false;}
  if(message?.type==='EDITOR_REQUEST'){void sendToEditor(message.request,message.windowId).then(sendResponse).catch(error=>sendResponse({ok:false,error:error.message}));return true;}
@@ -114,6 +114,6 @@ chrome.runtime.onMessage.addListener((message,sender,sendResponse)=>{
 });
 chrome.commands.onCommand.addListener(async (command,tab)=>{
  if(!/^apply-preset-[1-8]$/.test(command))return;
- const db=await loadDatabase(),id=db.settings.shortcutPresets[command.split('-').at(-1)!],preset=db.presets.find(p=>p.id===id);
+ const db=await loadShortcutConfiguration(),id=db.settings.shortcutPresets[command.split('-').at(-1)!],preset=db.presets.find(p=>p.id===id);
  if(!preset)return;try{const response=await sendToEditor({type:'format',preset},undefined,tab);await chrome.runtime.sendMessage({type:'SHORTCUT_RESULT',response,...(tab?{windowId:tab.windowId}:{})});}catch{}
 });

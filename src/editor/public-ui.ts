@@ -1,6 +1,6 @@
 import { EditorReader } from './reader';
 import { sliceRuns } from '../core/hash';
-import type { Format, EditorRequest } from '../core/types';
+import type { Format, EditorRequest, Snapshot } from '../core/types';
 import {assertNaverFormat,isNaverQuoteStyle,resolveQuoteStyle} from '../core/naver-format-options';
 import {quoteTarget} from '../core/quote-target';
 import {photoImageCount} from './postconditions';
@@ -12,7 +12,10 @@ function nativeColor(value:string|undefined):string|undefined{
  return rgb?'#'+rgb.slice(1).map(n=>Number(n).toString(16).padStart(2,'0')).join(''):value.toLowerCase();
 }
 export class PublicEditorUI {
- private formatGuard:()=>void=()=>{};
+ private formatGuard:(current?:Snapshot)=>void=()=>{};
+ private formatWake:AbortSignal|undefined;
+ private waitingForFormat=false;
+ get awaitingFormatResult():boolean{return this.waitingForFormat;}
  constructor(private reader:EditorReader,private didEdit:()=>void){}
  private visible(el:HTMLElement){const r=el.getBoundingClientRect(),style=getComputedStyle(el);return r.width>0&&r.height>0&&style.display!=='none'&&style.visibility!=='hidden'&&!el.closest('[aria-hidden="true"],[hidden]');}
  private label(el:HTMLElement){return (el.getAttribute('aria-label')||el.querySelector('.se-toolbar-option-label,.se-toolbar-label,.se-blind')?.textContent||el.getAttribute('title')||el.textContent||'').trim();}
@@ -132,10 +135,12 @@ export class PublicEditorUI {
   }
  }
  private async clickEdit(control:HTMLElement){
-  this.formatGuard();const before=this.reader.read();
+  const before=this.reader.read();this.formatGuard(before);
   if(control.matches(':disabled,[aria-disabled="true"]'))throw new Error('사용할 수 없는 네이버 편집 도구예요.');
   control.click();this.didEdit();
-  await waitNativeRevision(this.reader,before,this.formatGuard,'네이버 서식 적용의 완료를 아직 확인하지 못했어요.');
+  this.waitingForFormat=true;
+  try{await waitNativeRevision(this.reader,before,this.formatGuard,'네이버 서식 적용의 완료를 아직 확인하지 못했어요.',2000,this.formatWake);}
+  finally{this.waitingForFormat=false;}
  }
  private menus(control:HTMLElement):HTMLElement[]{
   const ids=[control.getAttribute('aria-controls'),control.getAttribute('aria-owns')].filter(Boolean).join(' ').split(/\s+/).filter(Boolean);
@@ -260,9 +265,9 @@ export class PublicEditorUI {
   }
   throw new PendingNativeLinebreakError('네이버 문단 나누기의 완료를 아직 확인하지 못했어요.');
  }
- async format(format:Format,guard:()=>void=()=>{}){
-  this.formatGuard=guard;
-  try{guard();await this.formatSelection(format);guard();}finally{this.formatGuard=()=>{};}
+ async format(format:Format,guard:(current?:Snapshot)=>void=()=>{},wake?:AbortSignal){
+  this.formatGuard=guard;this.formatWake=wake;
+  try{guard();await this.formatSelection(format);guard();}finally{this.formatGuard=()=>{};this.formatWake=undefined;}
  }
  private async formatSelection(format:Format){
   assertNaverFormat(format);
@@ -340,8 +345,9 @@ export class PublicEditorUI {
   }
   // Resolve paragraph tools before editing glyphs so an unavailable alignment
   // menu cannot leave a partially applied size/bold/colour operation to undo.
-  if(format.align&&format.paragraphStyle!=='quote'&&!(chosenBlocks().length&&chosenBlocks().every(block=>block.align===format.align)))await this.alignment(format.align,format.paragraphStyle===undefined);
-  if(format.fontSize!==undefined&&!(chosenRuns().length&&chosenRuns().every(run=>run.marks.fontSize===format.fontSize))){
+  if(format.align&&format.paragraphStyle!=='quote'){const blocks=chosenBlocks();if(!blocks.length||!blocks.every(block=>block.align===format.align))await this.alignment(format.align,format.paragraphStyle===undefined);}
+  const sized=format.fontSize!==undefined?chosenRuns():[];
+  if(format.fontSize!==undefined&&!(sized.length&&sized.every(run=>run.marks.fontSize===format.fontSize))){
    const control=this.button(/글자 크기 변경/);if(!control)throw new Error('네이버 글자 크기 메뉴를 찾을 수 없어요.');
    const size=String(format.fontSize);
    await this.choose(control,el=>{
@@ -362,7 +368,7 @@ export class PublicEditorUI {
    }
   }
   for(const [key,label] of [['color',/글자색 변경/],['background',/글자 배경색 변경/]] as const){
-   const value=format[key];if(!value||chosenRuns().length&&chosenRuns().every(run=>nativeColor(run.marks[key])===nativeColor(value)))continue;const button=this.button(label);if(!button)throw new Error('네이버 색상 메뉴를 찾을 수 없어요.');
+   const value=format[key];if(!value)continue;const runs=chosenRuns();if(runs.length&&runs.every(run=>nativeColor(run.marks[key])===nativeColor(value)))continue;const button=this.button(label);if(!button)throw new Error('네이버 색상 메뉴를 찾을 수 없어요.');
    await this.choose(button,el=>{
     return el.tagName==='BUTTON'&&(el.getAttribute('data-color')??el.getAttribute('data-value')??this.label(el)).toLowerCase()===value.toLowerCase()&&!!el.closest('[class*="color"],[role="menu"],[role="dialog"]');
    },'지정한 색상을 네이버 색상 메뉴에서 확인하지 못했어요. 지원 옵션 확인이 필요합니다.',true);

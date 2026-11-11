@@ -4,14 +4,14 @@ context: |
   Language: ko. Keep OpenSpec structural headings and SHALL/MUST in English.
   Geulbugi is a Chrome Manifest V3 extension for the PC Naver Blog editor.
   Chrome >=116; React/TypeScript; local settings and explicit Naver communication.
-  Current package and local materials: 1.1.2. Public-version evidence and actual
+  Current package/materials: 1.2.0; dashboard copy saved and submitted for review on 2026-11-11 with auto-publication after approval. Pending review; public version observed: 1.1.2. Public-version evidence and actual
   dashboard publication are separate records; never invent publication dates.
   Preserve draft text, photos, user edits, undo boundaries, and saved preferences.
   Final Naver save/publish actions belong to the user.
   Read openspec/README.md and the affected current specification before changes.
   Planned work lives in changes; only verified current behavior lives in specs.
-  Store dashboard copy is deferred until publication is confirmed, per user
-  direction on 2026-11-10. Git commit/push does not authorize that external action.
+  User explicitly authorized store copy updates and publication for uploaded 1.2.0 on 2026-11-11, superseding the earlier defer-until-publication instruction.
+  Verify actual upload/review/public states; do not replace ZIPs or cancel reviews. Git commit/push alone does not authorize external actions.
 
 rules:
   proposal:

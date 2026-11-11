@@ -27,11 +27,11 @@ describe('linebreak rule intents during delayed persistence',()=>{
   expect(stored).toMatchObject({scope:'body',sentences:2,longLength:24,blankLines:0,preserveExisting:true,reflow:false});
   await act(async()=>root.render(<RulesEditor rules={stored} onChange={()=>{}}/>));expect(button('일반 본문').className).toBe('active');expect((host.querySelector('#long-length') as HTMLInputElement).value).toBe('24');
  });
- it('does not cancel a pending reflow choice when preservation is switched off using stale props',async()=>{
+ it('shows the pending reflow choice immediately and honors a subsequent preservation click',async()=>{
   const rules={...defaultDatabase().settings.rules,scope:'selection' as const},pending:Partial<BreakRules>[]=[];
   await act(async()=>root.render(<RulesEditor rules={rules} onChange={patch=>pending.push(patch)}/>));
   const boxes=host.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');await act(async()=>boxes[1].click());await act(async()=>boxes[0].click());
-  expect(pending.reduce((current,patch)=>({...current,...patch}),rules)).toMatchObject({reflow:true,preserveExisting:false});
+  expect(pending.reduce((current,patch)=>({...current,...patch}),rules)).toMatchObject({reflow:false,preserveExisting:true});
  });
  it('blocks an unsupported native join choice but permits clearing an imported legacy choice',async()=>{
   const rules={...defaultDatabase().settings.rules,scope:'selection' as const},change=vi.fn();

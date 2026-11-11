@@ -2,13 +2,17 @@
 <html lang="ko">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>글부기 · 1.1.2 스토어 자료</title>
+<title>글부기 · 1.2.1 로컬 준비 자료</title>
 <style>body{font:16px/1.8 system-ui,sans-serif;color:#263b2e;background:#f6f8f4;margin:0}main{max-width:900px;margin:auto;padding:40px 24px}header{display:flex;gap:16px;align-items:center}header img{width:96px;height:96px}h1{margin:0}.subtitle{font-size:13px;color:#6f7a73;margin:0}a{color:#16875a}.shots{display:grid;grid-template-columns:1fr 1fr;gap:14px}.shots img{width:100%}code{font-size:11px;overflow-wrap:anywhere}</style>
 <main>
-<header><img src="images/icon-128.png" alt=""><div><h1>글부기</h1><p class="subtitle">네이버 블로그 편집 도우미</p><p>공개 버전 v1.1.2 · 자료 정리일 2026.11.10</p></div></header>
-<p>현재 공개 버전은 1.1.2입니다(2026-11-10 사용자 확인). 이 날짜는 자료 정리일이며 실제 출시일을 뜻하지 않습니다. 이번 정리는 로컬 README와 스토어 자료에 반영했으며, 대시보드 저장·패키지 업로드·심사 제출은 수행하지 않았습니다.</p>
-<p>스토어 문구의 대시보드 반영은 2026-11-10 사용자 지시에 따라 게시 확인 후 진행합니다. <a href="../openspec/changes/sync-store-materials-after-publication/tasks.md">남은 작업</a>에서 상태를 관리합니다.</p>
-<h2>1.1.2 서식 적용 후 커서 이동 개선</h2>
+<header><img src="images/icon-128.png" alt=""><div><h1>글부기</h1><p class="subtitle">네이버 블로그 편집 도우미</p><p>로컬 준비 버전 v1.2.1 · 자료 정리일 2026.11.11</p></div></header>
+<h2>1.2.1 프로필 글쓰기 자동 연결</h2>
+<p>프로필 글쓰기가 여는 별도 편집기 경로를 인식하고, 편집기 등록 후 패널 연결을 자동 갱신합니다. 1.2.1은 로컬 준비 상태이며 스토어에 업로드하거나 제출하지 않았습니다. 아래 1.2.0의 검토 제출 이력과 구분합니다.</p>
+<p>현재 공개 버전은 1.1.2입니다(2026-11-11 대시보드·공개 페이지 확인). 이 날짜는 자료 정리일이며 실제 출시일을 뜻하지 않습니다. 2026-11-11 초안 1.2.0을 확인하고 소개·개인정보·심사 안내를 저장·재확인한 뒤 검토에 제출했습니다. 현재 검토 대기 중이며 승인 후 자동 게시됩니다. 업로드된 CRX 내용과 해시는 독립 비교하지 않았습니다.</p>
+<p>2026-11-11 사용자 명시 지시로 이전 보류를 해제하고 문구 반영·검토 제출을 완료했습니다. 1.2.0 실제 공개 확인은 남아 있습니다. <a href="../openspec/changes/sync-store-materials-after-publication/tasks.md">남은 작업</a>에서 상태를 관리합니다.</p>
+<h2>1.2.0 빠른 편집·안정성 개선</h2>
+<p>선택 추적의 반복 읽기와 서식 완료 고정 대기를 줄였습니다. 체크박스 연속 조작 유실과 이전 편집·단축키 응답의 상태 역전을 수정했습니다. 전체 적용과 원문·사진·선택 밖 서식 보존을 검증한 뒤 바로 입력할 수 있습니다. 1.2.0은 실제 대시보드에서 검토 대기 중으로 확인했으며 승인 후 자동 게시가 설정됐습니다. 현재 공개 페이지는 1.1.2입니다.</p>
+<h2>기존 서식 적용 후 커서 이동 개선</h2>
 <p>서식 적용 직후 본문을 클릭해 커서를 옮겼을 때, 적용이 끝났는데도 복구 안내가 표시되던 문제를 수정했습니다. 원래 선택 영역의 서식·원문·사진 보존을 확인한 뒤 새 커서 위치와 직전 작업 되돌리기를 유지합니다. 부분 적용이나 직접 입력은 기존처럼 보호합니다.</p>
 <h2>내 글 탐색과 단축키</h2>
 <p>내 글 탭에서 최근 공개 글을 최대 10개 표시합니다. 네이버 블로그 탭이 열려 있으면 실제 카테고리와 하위 분류별 최근 글을 조회할 수 있습니다. 키워드 검색은 전체 카테고리를 최근 작성일순으로 검색하고, '최근 글 보기'로 최근 목록에 복귀합니다. 본문 위치를 다시 선택하지 않고 링크 카드를 연속 삽입할 수 있습니다.</p>
@@ -16,7 +20,7 @@
 <h2>편집·미리보기·복구</h2>
 <p>서식·인용구, 사진 이동·추가·AI 활용 설정, 의미를 살린 줄바꿈 미리보기와 예약 날짜·시간 설정을 제공합니다. 최종 저장·발행은 네이버 화면에서 직접 실행합니다. 결과가 불확실한 작업은 본문 확인 → 네이버 상단 '저장'(임시저장) → 저장 완료 확인 → '저장한 글 새로고침' 순서로 복구합니다.</p>
 <h2>설치와 제출 자료</h2>
-<p><a href="https://chromewebstore.google.com/detail/gmcaompgkpccmnpcbngeoabbfkgcoabg">Chrome 웹 스토어</a> · <a href="../artifacts/geulbugi-1.1.2.zip">로컬 설치 ZIP</a> · <a href="../artifacts/geulbugi-store-materials-1.1.2.zip">스토어 자료 ZIP</a></p>
+<p><a href="https://chromewebstore.google.com/detail/gmcaompgkpccmnpcbngeoabbfkgcoabg">Chrome 웹 스토어</a> · <a href="../artifacts/geulbugi-1.2.1.zip">로컬 설치 ZIP</a> · <a href="../artifacts/geulbugi-store-materials-1.2.1-20261111.zip">스토어 자료 ZIP</a></p>
 <ul>
 <li><a href="listing-ko.txt">스토어 소개</a></li>
 <li><a href="privacy-fields-ko.txt">개인정보 보호 탭 입력안</a></li>
@@ -24,9 +28,9 @@
 <li><a href="submission.json">공개 상태·자료 정리 기록</a> · <a href="assets.json">이미지 목록과 해시</a></li>
 <li><a href="site/privacy.html">패키지와 동일한 개인정보처리방침</a> · <a href="https://geulbugi.vercel.app/privacy/">공개 개인정보처리방침</a></li>
 </ul>
-<p>기존 1.1.2 로컬 설치 ZIP을 유지했습니다. 스토어에서 내려받은 패키지와 동일하다고 검증한 기록은 아닙니다. 과거 제출·검증 기록은 문서와 submission.json의 submissionHistory에 보존하며 현재 버전의 검증 결과로 재사용하지 않습니다.</p>
+<p>사용자 요청에 따라 1.2.1 로컬 설치 ZIP을 생성했습니다. 스토어에서 내려받은 패키지와 동일하다고 검증한 기록은 아닙니다. 과거 제출·검증 기록은 문서와 submission.json의 submissionHistory에 보존하며 현재 버전의 검증 결과로 재사용하지 않습니다.</p>
 <h2>스토어 이미지</h2>
-<p>기존 아이콘·프로모션 타일·스크린샷 5개를 유지했습니다. 화면은 제품의 예시 문서 미리보기이며 개인 원고나 로그인 정보를 포함하지 않습니다. 1.1.2에서 새로 촬영한 이미지나 실제 네이버 연동 검증 화면은 아닙니다.</p>
+<p>기존 아이콘·프로모션 타일·스크린샷 5개를 유지했습니다. 화면은 제품의 예시 문서 미리보기이며 개인 원고나 로그인 정보를 포함하지 않습니다. 1.2.1에서 새로 촬영한 이미지나 실제 네이버 연동 검증 화면은 아닙니다.</p>
 <div class="shots">
 <img src="images/01-format-1280x800.png" alt="서식 적용 예시 화면">
 <img src="images/02-quote-1280x800.png" alt="인용구 선택 예시 화면">
@@ -34,6 +38,6 @@
 <img src="images/04-photos-1280x800.png" alt="사진 위치 정리 예시 화면">
 <img src="images/05-schedule-1280x800.png" alt="예약 시간 설정 예시 화면">
 </div>
-<p>로컬 설치 ZIP SHA-256<br><code>6c54bc6d55cf263ca48210ddf4502866c8997e28033479aa3f73357d2d37949e</code></p>
+<p>로컬 설치 ZIP SHA-256<br><code>12af46fc9caa9b350026c882500795dfb0147d2f3b18c3486037332f0e3f09d3</code></p>
 </main>
 </html>

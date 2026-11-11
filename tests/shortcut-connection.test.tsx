@@ -39,7 +39,9 @@ it('keeps a confirmed shortcut result when an older snapshot later fails',async(
 it('ignores a stale failed poll after a newer connection check succeeds',async()=>{
  await act(async()=>root.render(<App/>));
  const older=deferred(),newer=deferred();vi.mocked(editorRequest).mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise);
- await poll();await poll();
+ await poll();
+ await act(async()=>button('사진').click());
+ await act(async()=>host.querySelector<HTMLButtonElement>('[aria-label="사진 목록 새로고침"]')!.click());
  await act(async()=>newer.resolve(ready()));
  await act(async()=>older.resolve({ok:false,error:'지연된 연결 오류'}));
  expect(host.querySelector('.recovery-banner')).toBeNull();

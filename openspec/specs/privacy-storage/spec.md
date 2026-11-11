@@ -26,7 +26,20 @@
 - **WHEN** 데이터 처리 설명을 수정한다
 - **THEN** 구현·요청 권한·개인정보 입력안·패키지 및 공개 처리방침의 일치 여부를 확인하고 로컬 처리라고 해서 아무 데이터도 처리하지 않는 것으로 표시하지 않는다
 
+### Requirement: DATA-004 지연 저장 중 설정 조작 보존
+시스템은 체크박스와 줄바꿈 설정의 조작을 즉시 표시하고 조작 순서를 보존해야 하며(SHALL), 저장 실패를 성공으로 표시하거나 오래된 저장 응답으로 더 최근 조작을 되돌리지 않아야 한다(MUST). 기존 저장/백업 형식은 유지해야 한다(MUST).
+
+#### Scenario: 저장 전에 같은 체크박스 두 번 조작
+- **WHEN** 저장 응답이 지연되는 동안 사용자가 같은 체크박스를 해제한 뒤 다시 체크한다
+- **THEN** 각 조작이 즉시 표시되고 최종 저장 값은 다시 체크한 값이다
+
+#### Scenario: 저장 실패
+- **WHEN** 설정 저장이 실패하고 이후 성공한 조작이 없다
+- **THEN** 실패를 안내하고 실제 저장 상태와 화면을 다시 일치시킨다
+
 ## Evidence
 - 구현: `public/manifest.json`, `public/privacy.html`, `src/platform/storage.ts`, `src/platform/link-card-cache.ts`, `src/core/backup.ts`, `src/core/merge-database.ts`.
 - 등록 자료: `store/privacy-fields-ko.txt`, `store/site/privacy.html`, `website/privacy/index.html`.
 - 자동 검사: `tests/backup-demo.test.ts`, `tests/postconditions-storage.test.ts`, `tests/link-card-cache.test.ts`, `tests/release-audit-backup.test.ts`, `scripts/verify-package.mjs`, `scripts/verify-store.mjs`.
+
+- 2026-11-10 로컬 수정본 검증: `tests/fast-editing-state.test.tsx`, `tests/fast-format-input.test.ts`, `tests/fast-settings-save.test.tsx`, `tests/selection-performance.test.ts`, `tests/panel-refresh-performance.test.tsx`. 공개 스토어 반영과 구분한다.

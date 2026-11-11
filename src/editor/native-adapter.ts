@@ -16,8 +16,10 @@ import { canonicalPost, validatePost } from '../core/security';
 import {assertNaverFormat} from '../core/naver-format-options';
 import {loadCardReferences,saveCardReference} from '../platform/link-card-cache';
 const FORMAT_MODIFIER_KEYS=new Set(['Control','Shift','Alt','Meta','AltGraph']);
+class ConfirmedFormatHandoff extends Error{}
 export class NativeAdapter {
  private busy=false;
+ private pendingFormat:{complete:()=>Snapshot|null;done:Promise<void>}|undefined;
  private undoCount=0;
  private undoAi=false;
  private undoBefore:string|null=null;
@@ -106,7 +108,8 @@ export class NativeAdapter {
  }
  async handle(request:EditorRequest):Promise<EditorResponse>{
   let before:Snapshot|undefined;let mutating=false,ownsBusy=false;
-  let photoMoveInterrupted=false,linebreakInterrupted=false,formatInterrupted=false,linkInterrupted=false,formatGuard:(()=>void)|undefined,releaseMutationGuard:(()=>void)|undefined;
+  let photoMoveInterrupted=false,linebreakInterrupted=false,formatInterrupted=false,linkInterrupted=false,formatGuard:((current?:Snapshot)=>void)|undefined,releaseMutationGuard:(()=>void)|undefined;
+  let handedOff:Snapshot|undefined,releaseFormat:(()=>void)|undefined;
   let formatPointerOnly=true;
   let previousJournal:{ai:boolean;count:number;before:string|null;expected:string|null;baseline:Snapshot|null}|undefined;
   try{
@@ -114,10 +117,20 @@ export class NativeAdapter {
    if(request.type==='snapshot')return {ok:true,snapshot:await this.snapshot(request.retryMedia)};
    if(this.photoPreparation)await this.photoPreparation;
    if(request.type==='focus'){this.reader.read();const target=this.reader.elements.get(request.blockId);if(!target?.isConnected)throw new Error('문단을 다시 선택해 주세요.');target.scrollIntoView({block:'center',behavior:'smooth'});return {ok:true,snapshot:await this.snapshot()};}
+   if(this.busy&&request.type==='format'&&this.pendingFormat){
+    // This is not a retry queue: only an already fully verified native result
+    // can release the previous operation. Freeze the new request's target.
+    this.reader.captureSelection();const bookmark=this.reader.read(),pending=this.pendingFormat,completed=pending.complete();
+    if(completed){
+     await pending.done;this.reader.captureSelection();const current=this.reader.read(),a=bookmark.selection,b=current.selection;
+     if(current.sessionId!==bookmark.sessionId||current.documentKey!==bookmark.documentKey||current.revision!==completed.revision||!a?.valid||!b?.valid||
+        a.blockId!==b.blockId||a.endBlockId!==b.endBlockId||a.start!==b.start||a.end!==b.end||a.signature!==b.signature)throw new Error('다음 서식을 적용하기 전에 본문이나 선택이 바뀌었어요. 적용할 글자를 다시 선택해 주세요.');
+    }
+   }
    if(this.busy)throw new Error('진행 중인 작업이 끝날 때까지 기다려 주세요.');
-   // Native keyboard events can precede the caret overlay update. Refresh the
-   // insertion bookmark from the settled public caret before choosing a target.
-   if(request.type==='link')this.reader.captureSelection();
+   // A shortcut can beat the reader's delayed selection event. Capture the
+   // actual native buffer now instead of applying a previous collapsed bookmark.
+   if(request.type==='link'||request.type==='format')this.reader.captureSelection();
    before=await this.snapshot();if(!before.editable)throw new Error('PC 네이버 글쓰기에서 실행해 주세요.');
    if(this.photoPreparation){await this.photoPreparation;before=await this.snapshot();}
    if(this.unsafe)throw new Error(this.unsafeIssue);
@@ -198,6 +211,18 @@ export class NativeAdapter {
     }
     case 'format':{
      const docs=[document,...[...document.querySelectorAll<HTMLIFrameElement>('iframe[id^="input_buffer"]')].flatMap(frame=>{try{return frame.contentDocument?[frame.contentDocument]:[];}catch{return [];}})];
+     const original=before,wake=new AbortController();let finish!:()=>void;
+     const done=new Promise<void>(resolve=>{finish=resolve;});
+     const complete=()=>{
+      if(handedOff)return handedOff;
+      if(formatInterrupted||!this.ui.awaitingFormatResult||this.undoCount<1)return null;
+      try{
+       const current=this.reader.read();
+       if(current.sessionId!==original.sessionId||current.documentKey!==original.documentKey||current.title!==original.title||!current.editable||current.uploadBusy||current.mediaPending||current.revision===original.revision||this.photos(current.blocks)!==this.photos(original.blocks))return null;
+       verifyPostconditions(original,current,request);handedOff=current;wake.abort();return current;
+      }catch{return null;}
+     };
+     this.pendingFormat={complete,done};releaseFormat=()=>{this.pendingFormat=undefined;finish();};
      const interaction=(event:Event)=>{
       if(!event.isTrusted)return;
       // Chrome consumes an extension shortcut's main key, but the preceding
@@ -205,15 +230,20 @@ export class NativeAdapter {
       // Modifiers alone change neither text nor selection. The next character,
       // navigation key, composition, pointer, paste or cut still stops the edit.
       if(event.type==='keydown'&&FORMAT_MODIFIER_KEYS.has((event as KeyboardEvent).key))return;
+      const key=event as KeyboardEvent;
+      const inputIntent=['compositionstart','paste','cut'].includes(event.type)||event.type==='keydown'&&(
+       ['Backspace','Delete','Enter','Process','Unidentified','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown'].includes(key.key)||key.key?.length===1&&(!key.ctrlKey&&!key.metaKey&&!key.altKey||['v','x'].includes(key.key.toLowerCase())&&(key.ctrlKey||key.metaKey)));
+      if(inputIntent&&complete())return;
       if(event.type!=='mousedown'&&event.type!=='touchstart')formatPointerOnly=false;
       formatInterrupted=true;
      };
      const events=['mousedown','keydown','touchstart','compositionstart','paste','cut'];
      for(const doc of docs)for(const type of events)doc.addEventListener(type,interaction,true);
      releaseMutationGuard=()=>{for(const doc of docs)for(const type of events)doc.removeEventListener(type,interaction,true);};
-     const original=before,text=(snapshot:Snapshot)=>snapshot.blocks.map(block=>block.text==='\n'?'':block.text).join('').replace(/\u00a0/gu,' '),originalText=text(before),originalChars=Array.from(originalText);
-     formatGuard=()=>{
-      const current=this.reader.read(),value=text(current);
+     const text=(snapshot:Snapshot)=>snapshot.blocks.map(block=>block.text==='\n'?'':block.text).join('').replace(/\u00a0/gu,' '),originalText=text(before),originalChars=Array.from(originalText);
+     formatGuard=(snapshot?:Snapshot)=>{
+      if(handedOff)throw new ConfirmedFormatHandoff();
+      const current=snapshot??this.reader.read(),value=text(current);
       if(current.sessionId!==original.sessionId||current.documentKey!==original.documentKey)formatInterrupted=true;
       if(value!==originalText){
        let matched=0;for(const char of value)if(char===originalChars[matched])matched++;
@@ -222,7 +252,7 @@ export class NativeAdapter {
       }
       if(formatInterrupted)throw new Error('서식 적용 중 직접 편집한 내용이나 커서 이동이 있어 작업을 멈췄어요.');
      };
-     await this.ui.format(request.preset.format,formatGuard);formatGuard();break;
+     await this.ui.format(request.preset.format,formatGuard,wake.signal);formatGuard();break;
     }
     case 'link':{
      const db=await loadDatabase(),post=validatePost(request.post,db.settings.blogUrl);
@@ -269,7 +299,7 @@ export class NativeAdapter {
      break;
     }
    }
-   await new Promise(r=>setTimeout(r,100));if(request.type!=='photo-ai-on')await this.reader.loadPendingPhotos();let after=await this.snapshot();if(request.type==='format')formatGuard?.();
+   if(request.type!=='format')await new Promise(r=>setTimeout(r,100));if(request.type!=='photo-ai-on')await this.reader.loadPendingPhotos();let after=await this.snapshot();if(request.type==='format')formatGuard?.(after);
    if(after.revision===before.revision)throw new Error('본문 변경을 확인하지 못했어요. 적용할 위치를 다시 선택해 주세요.');
    if(request.type==='photo-ai-on'?(photoAiContent(after)!==photoAiContent(before)||photoAiStatus(after.blocks).on!==photoAiStatus(after.blocks).total):this.photos(after.blocks)!==this.photos(before.blocks))throw new Error('사진·캡션·속성 보존을 확인하지 못했어요.');
    if(request.type==='photo-move'&&photoMoveInterrupted)throw new Error('사진 이동 중 직접 수정한 내용이 있어요. 네이버에서 사진 위치를 확인해 주세요.');
@@ -298,6 +328,13 @@ export class NativeAdapter {
    this.undoExpected=completedRevision;after.canUndo=this.undoCount>0&&after.revision===completedRevision;
    return {ok:true,snapshot:after};
   }catch(error){
+   if(request.type==='format'&&handedOff){
+    // The full original postconditions were checked BEFORE the author's
+    // input/default browser action. Never undo or resume tools past that point.
+    this.reader.captureSelection();const after=await this.snapshot();this.undoExpected=handedOff.revision;
+    after.canUndo=this.undoCount>0&&after.sessionId===handedOff.sessionId&&after.documentKey===handedOff.documentKey&&after.revision===handedOff.revision;
+    return {ok:true,snapshot:after};
+   }
    if(request.type==='format'&&formatGuard)try{formatGuard();}catch(guardError){error=guardError;}
    if(request.type==='format'&&before&&formatInterrupted&&formatPointerOnly&&this.undoCount>0){
     // A body click can arrive after the last toolbar action changed the DOM,
@@ -342,6 +379,6 @@ export class NativeAdapter {
    }
    if(request.type==='photo-ai-on'&&mutating){const status=photoAiStatus(this.reader.read().blocks);message+=' 현재 '+status.total+'장 중 '+status.on+'장 ON이에요.';if(!this.unsafe)message+=' 다시 실행하면 꺼진 사진만 켜요.';}
    return {ok:false,error:message,...(this.unsafe?{recoveryRequired:true}:{})};
-  }finally{releaseMutationGuard?.();if(ownsBusy)this.busy=false;}
+  }finally{releaseMutationGuard?.();if(ownsBusy)this.busy=false;releaseFormat?.();}
  }
 }

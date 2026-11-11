@@ -4,7 +4,7 @@ import { blockSignature, documentSignature, hash, mergeRuns } from '../core/hash
 import { safeHref,canonicalLinkedUrl } from '../core/security';
 import type {CardReference} from '../platform/link-card-cache';
 
-export const ADAPTER_VERSION='naver-one-public-ui-v43';
+export const ADAPTER_VERSION='naver-one-public-ui-v44';
 const TEXT_SELECTOR='.se-text-paragraph';
 const IGNORED_SELECTOR='.se-placeholder,.__se_placeholder,.__se-toolbar-slot,.se-set-ai-mark-button-wrapper';
 type BufferSelection = { frame:HTMLIFrameElement; document:Document; range:Range; text:string };
@@ -25,6 +25,18 @@ export class EditorReader {
  private pointerStart:HTMLElement|null=null;
  private clickedSignature:string|null=null;
  private disposed=false;
+ // Reuse content only while tracking selection. Mutation/undo/postcondition
+ // callers still use read(), which always scans the current document.
+ private selectionContent:{root:HTMLElement|null;snapshot:Snapshot;at:number}|null=null;
+ private invalidateSelectionContent=(records:MutationRecord[])=>{
+  if(records.some(record=>!(record.target instanceof Element?record.target:record.target.parentElement)?.closest('.se-selection,iframe[id^="input_buffer"]'))){this.selectionContent=null;if(this.timer)clearTimeout(this.timer);this.timer=setTimeout(()=>this.onChange(),350);}
+ };
+ private readonly invalidateLayout=()=>{this.selectionContent=null;};
+ private selectionSnapshot():Snapshot{
+  this.invalidateSelectionContent(this.observer.takeRecords());
+  const cached=this.selectionContent;
+  return cached&&cached.root===this.getRoot()&&performance.now()-cached.at<100?cached.snapshot:this.read();
+ }
 
  private observer:MutationObserver;
  private timer:ReturnType<typeof setTimeout>|null=null;
@@ -35,7 +47,7 @@ export class EditorReader {
   if(event.type==='mouseup'&&event.target instanceof Node&&this.getRoot()?.contains(event.target)){
    const paragraph=this.blockElement(event.target);
    this.clickedParagraph=paragraph===this.pointerStart?paragraph:null;
-   const block=this.read().blocks.find(b=>this.elements.get(b.id)===this.clickedParagraph);
+   const block=this.selectionSnapshot().blocks.find(b=>this.elements.get(b.id)===this.clickedParagraph);
    this.clickedSignature=block&&['paragraph','heading','quote'].includes(block.kind)&&!paragraph?.closest('.se-cite')?blockSignature(block):null;
    this.onChange();
   }
@@ -48,8 +60,9 @@ export class EditorReader {
   this.selectionTimer=setTimeout(()=>{this.selectionTimer=null;if(!this.disposed)this.captureSelection();},60);
  }
  constructor(){
-  this.observer=new MutationObserver(()=>{this.bindInputFrames();if(this.timer)clearTimeout(this.timer);this.timer=setTimeout(()=>this.onChange(),350);});
-  this.observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['style','class','src','href']});
+  this.observer=new MutationObserver(records=>{this.invalidateSelectionContent(records);this.bindInputFrames();});
+  this.observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true,attributes:true});
+  window.addEventListener('resize',this.invalidateLayout);document.addEventListener('load',this.invalidateLayout,true);
   document.addEventListener('selectionchange',this.selectionListener);
   document.addEventListener('mousedown',this.selectionListener);
   document.addEventListener('mouseup',this.selectionListener);
@@ -133,6 +146,7 @@ export class EditorReader {
   return 'paragraph';
  }
  read():Snapshot{
+  this.invalidateSelectionContent(this.observer.takeRecords());
   this.bindInputFrames();this.container=this.getRoot();this.elements.clear();
   const blocks:Block[]=[];let mediaPending=false;
   if(this.container){
@@ -166,12 +180,16 @@ export class EditorReader {
   }
   const titleElement=document.querySelector<HTMLElement>('.se-title-text .se-text-paragraph,.se-documentTitle .se-text-paragraph')??document.querySelector<HTMLElement>('.se-title-text,.se-documentTitle');
   const title=(titleElement?this.runs(titleElement).map(r=>r.text).join(''):document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.content??document.title.replace(/ : 네이버 블로그$/,'')).replace(/\u00a0/gu,' ').trim();
-  const editable=!!this.container&&(!!this.container.querySelector('[contenteditable="true"]')||/PostWriteForm|PostUpdateForm/.test(location.pathname));
+  // The profile's 글쓰기 opens /<blogId>/postwrite inside mainFrame. Naver's
+  // native canvas uses an input_buffer iframe, not inline contenteditable.
+  const writingRoute=/PostWriteForm|PostUpdateForm/.test(location.pathname)||/^\/[a-z0-9_-]+\/postwrite\/?$/i.test(location.pathname);
+  const editable=!!this.container&&(!!this.container.querySelector('[contenteditable="true"]')||writingRoute);
   let remembered=this.remembered;
   if(remembered){const start=blocks.find(b=>b.id===remembered!.blockId),end=blocks.find(b=>b.id===remembered!.endBlockId);remembered={...remembered,valid:!!start&&!!end&&this.selectionSignature(blocks,remembered.blockId,remembered.endBlockId)===remembered.signature&&!!this.range?.startContainer.isConnected&&!!this.range?.endContainer.isConnected&&this.bufferStillValid()};if(!remembered.valid)this.selectionIssue='선택했던 본문이나 입력 영역이 달라졌어요. 글자를 다시 선택해 주세요.';}
   const url=location.href,parsed=new URL(url),blogId=parsed.searchParams.get('blogId')??parsed.pathname.split('/').filter(Boolean)[0]??'';
   const clicked=blocks.find(b=>this.elements.get(b.id)===this.clickedParagraph),paragraphTarget=clicked&&blockSignature(clicked)===this.clickedSignature?{blockId:clicked.id,signature:this.clickedSignature}:undefined;
-  return {sessionId:this.sessionId,documentKey:hash({blogId,title,editable}),adapterSignature:ADAPTER_VERSION+'-'+hash({root:this.container?.className,editable,toolbar:!!document.querySelector('button[aria-label*="인용구"],button[title*="인용구"]')}),title,url,revision:documentSignature(title,blocks),editable,blocks,selection:remembered,paragraphTarget,selectionIssue:this.selectionIssue,linkedUrls:[...new Set(blocks.flatMap(b=>[...b.runs.flatMap(r=>r.marks.href?[canonicalLinkedUrl(r.marks.href)!]:[]),...(b.linkCard?[b.linkCard.url]:[])]))],uploadBusy:!!document.querySelector('.se-upload-progress,.se-image-upload-loading,[aria-busy="true"]'),canUndo:false,mediaPending};
+  const snapshot:Snapshot={sessionId:this.sessionId,documentKey:hash({blogId,title,editable}),adapterSignature:ADAPTER_VERSION+'-'+hash({root:this.container?.className,editable,toolbar:!!document.querySelector('button[aria-label*="인용구"],button[title*="인용구"]')}),title,url,revision:documentSignature(title,blocks),editable,blocks,selection:remembered,paragraphTarget,selectionIssue:this.selectionIssue,linkedUrls:[...new Set(blocks.flatMap(b=>[...b.runs.flatMap(r=>r.marks.href?[canonicalLinkedUrl(r.marks.href)!]:[]),...(b.linkCard?[b.linkCard.url]:[])]))],uploadBusy:!!document.querySelector('.se-upload-progress,.se-image-upload-loading,[aria-busy="true"]'),canUndo:false,mediaPending};
+  this.selectionContent={root:this.container,snapshot,at:performance.now()};return snapshot;
  }
  async loadPendingPhotos(timeout=6000,options:{signal?:AbortSignal;restoreScroll?:()=>boolean}={}):Promise<void>{
   if(!this.read().mediaPending)return;
@@ -243,20 +261,22 @@ export class EditorReader {
   try{return buffer.frame.isConnected&&buffer.frame.contentDocument===buffer.document&&buffer.range.startContainer.isConnected&&buffer.range.endContainer.isConnected&&buffer.range.toString()===buffer.text;}catch{return false;}
  }
  clearSelection(reason?:string):void{
-  this.remembered=null;this.range=null;this.bufferSelection=null;this.selectionIssue=reason;this.onChange();
+  const changed=!!this.remembered||this.selectionIssue!==reason;
+  this.remembered=null;this.range=null;this.bufferSelection=null;this.selectionIssue=reason;if(changed)this.onChange();
  }
- private rememberRange(range:Range,text:string,buffer:BufferSelection|null=null):boolean{
+ private rememberRange(range:Range,text:string,buffer:BufferSelection|null=null,content?:Snapshot):boolean{
   const root=this.getRoot(),startEl=this.blockElement(range.startContainer),endEl=this.blockElement(range.endContainer);
   if(!root||!startEl||!endEl||!root.contains(startEl)||!root.contains(endEl)){
    this.clearSelection('일반 본문의 글자를 다시 선택해 주세요.');return false;
   }
-  const snapshot=this.read(),startId=this.id(startEl),endId=this.id(endEl);
+  const snapshot=content??this.selectionSnapshot(),startId=this.id(startEl),endId=this.id(endEl);
   if(!snapshot.blocks.some(b=>b.id===startId)||!snapshot.blocks.some(b=>b.id===endId)){
    this.clearSelection('일반 본문의 글자를 다시 선택해 주세요.');return false;
   }
-  this.range=range.cloneRange();this.bufferSelection=buffer;this.selectionIssue=undefined;
-  this.remembered={blockId:startId,endBlockId:endId,start:this.offset(startEl,range.startContainer,range.startOffset),end:this.offset(endEl,range.endContainer,range.endOffset),text,signature:this.selectionSignature(snapshot.blocks,startId,endId),valid:true,collapsed:range.collapsed};
-  this.onChange();return true;
+  const next:Selection={blockId:startId,endBlockId:endId,start:this.offset(startEl,range.startContainer,range.startOffset),end:this.offset(endEl,range.endContainer,range.endOffset),text,signature:this.selectionSignature(snapshot.blocks,startId,endId),valid:true,collapsed:range.collapsed};
+  const changed=!!this.selectionIssue||JSON.stringify(this.remembered)!==JSON.stringify(next);
+  this.range=range.cloneRange();this.bufferSelection=buffer;this.selectionIssue=undefined;this.remembered=next;
+  if(changed)this.onChange();return true;
  }
  private captureBufferSelection(frame:HTMLIFrameElement):boolean{
   let doc:Document|null=null;try{doc=frame.contentDocument;}catch{return false;}
@@ -277,12 +297,12 @@ export class EditorReader {
    if(emptyCaret||document.querySelector('.se-selection div.se-caret')){
     // Arrow keys can move the native caret to another (including empty)
     // paragraph while the rendered DOM Selection stays at the old click.
-    const snapshot=this.read(),candidates=snapshot.blocks.filter(b=>['paragraph','heading','quote'].includes(b.kind)&&!this.elements.get(b.id)?.closest('.se-cite'));
+    const snapshot=this.selectionSnapshot(),candidates=snapshot.blocks.filter(b=>['paragraph','heading','quote'].includes(b.kind)&&!this.elements.get(b.id)?.closest('.se-cite'));
     const matches=candidates.flatMap(block=>{const mapped=this.nativeCaretRange(this.elements.get(block.id)!,block);return mapped?[mapped]:[];});
     if(matches.length!==1){this.clearSelection('네이버 커서 위치를 확인하지 못했어요. 삽입할 본문 위치를 다시 클릭해 주세요.');return true;}
     range=matches[0];
    }
-   if(range)this.rememberRange(range,'',{frame,document:doc!,range:nativeRange.cloneRange(),text:''});
+   if(range)this.rememberRange(range,'',{frame,document:doc!,range:nativeRange.cloneRange(),text:''},this.selectionSnapshot());
    else this.captureVisibleSelection();return true;
   }
   const inputRange=this.trimInputRange(body,nativeRange);
@@ -296,6 +316,11 @@ export class EditorReader {
   const fragment=document.importNode(inputRange.cloneContents(),true),paragraphs=[...fragment.querySelectorAll<HTMLElement>(TEXT_SELECTOR)];
   if(paragraphs.length>1){this.captureParagraphBuffer(paragraphs,fragment,caret,buffer);return true;}
   const selectedText=this.runs(fragment).map(run=>run.text).join('');
+  // SmartEditor can leave the rendered DOM anchor in the title after restoring
+  // a draft. Its native selected payload and visible highlight must both agree
+  // with one body range before that stale anchor can be bypassed.
+  const highlighted=this.highlightedBufferRange(selectedText);
+  if(highlighted){this.rememberRange(highlighted,selectedText,buffer);return true;}
   if(!caret.collapsed&&root.contains(caret.startContainer)&&root.contains(caret.endContainer)&&visible.toString()===text){
    this.rememberRange(caret,selectedText,buffer);return true;
   }
@@ -314,6 +339,23 @@ export class EditorReader {
   }
   const mapped=this.rangeAt(block.id,matches[0]),end=this.rangeAt(block.id,matches[0]+needle.length);
   mapped.setEnd(end.startContainer,end.startOffset);this.rememberRange(mapped,block.text.slice(matches[0],matches[0]+needle.length),buffer);return true;
+ }
+ private highlightedBufferRange(text:string):Range|null{
+  const highlights=[...document.querySelectorAll<SVGElement>('.se-selection.se-is-block-selected .se-selection-block')]
+   .map(element=>element.getBoundingClientRect()).filter(rect=>rect.width>0&&rect.height>0);
+  if(!text||!highlights.length)return null;
+  const plain=(value:string)=>value.replace(/\u00a0/gu,' '),needle=plain(text),snapshot=this.selectionSnapshot(),matches:Range[]=[];
+  const same=(a:DOMRect,b:DOMRect)=>Math.abs(a.left-b.left)<=1.5&&Math.abs(a.top-b.top)<=1.5&&Math.abs(a.width-b.width)<=1.5&&Math.abs(a.height-b.height)<=1.5;
+  for(const block of snapshot.blocks){
+   if(!['paragraph','heading','quote'].includes(block.kind)||this.elements.get(block.id)?.closest('.se-cite'))continue;
+   const source=plain(block.text);
+   for(let at=source.indexOf(needle);at>=0;at=source.indexOf(needle,at+1)){
+    const range=this.rangeAt(block.id,at),end=this.rangeAt(block.id,at+needle.length);range.setEnd(end.startContainer,end.startOffset);
+    const rects=[...range.getClientRects()].filter(rect=>rect.width>0&&rect.height>0).filter((rect,index,all)=>all.findIndex(other=>same(rect,other))===index);
+    if(rects.length===highlights.length&&rects.every(rect=>highlights.some(highlight=>same(rect,highlight)))&&highlights.every(highlight=>rects.some(rect=>same(rect,highlight))))matches.push(range);
+   }
+  }
+  return matches.length===1?matches[0]:null;
  }
  private captureParagraphBuffer(paragraphs:HTMLElement[],fragment:DocumentFragment,caret:Range,buffer:BufferSelection):void{
   const snapshot=this.read(),plain=(value:string)=>value.replace(/\u00a0/gu,' ');
@@ -418,6 +460,18 @@ export class EditorReader {
   // Empty native paragraphs have no text rectangle. Their sole logical
   // position is zero; validate it against the editor's public caret and line.
   if(!block.text&&bounds.height>0&&x>=bounds.left-2&&x<=bounds.right+2&&y>=bounds.top-2&&y+height<=bounds.bottom+2)return this.rangeAt(id,0);
+  const agrees=(range:Range)=>[...range.getClientRects()].some(rect=>rect.height>0&&Math.abs(rect.left-x)<=1.5&&Math.abs(rect.top-y)<=1.5);
+  // Ask the browser for a candidate instead of measuring every character of
+  // a long paragraph. Verify geometry and adjacent ambiguity before accepting.
+  // Bidirectional text can share a visual boundary with a nonadjacent logical
+  // offset. Keep the exhaustive ambiguity check for those paragraphs.
+  const simpleDirection=getComputedStyle(paragraph).direction!=='rtl'&&!/[\u0590-\u08ff\u200e\u200f\u202a-\u202e\u2066-\u2069\ufb1d-\ufdff\ufe70-\ufefc]/u.test(block.text);
+  const pointRange=simpleDirection?(document as Document&{caretRangeFromPoint?:(x:number,y:number)=>Range|null}).caretRangeFromPoint?.(x,y+height/2):null;
+  if(pointRange?.collapsed&&paragraph.contains(pointRange.startContainer)){
+   const offset=this.offset(paragraph,pointRange.startContainer,pointRange.startOffset);
+   if(offset>=0&&offset<=block.text.length&&agrees(pointRange)&&
+      (offset===0||!agrees(this.rangeAt(id,offset-1)))&&(offset===block.text.length||!agrees(this.rangeAt(id,offset+1))))return pointRange;
+  }
   const matches:Range[]=[];
   for(let offset=0;offset<=block.text.length;offset++){
    const range=this.rangeAt(id,offset),rects=[...range.getClientRects()];
@@ -527,5 +581,5 @@ export class EditorReader {
   const range=this.rangeAt(firstId,0),end=this.rangeAt(lastId,last.text.length);range.setEnd(end.startContainer,end.startOffset);
   if(!this.rememberRange(range,text))throw new Error('본문을 다시 드래그해 주세요.');this.restoreSelection(true);
  }
- dispose():void{this.disposed=true;for(const [frame,binding] of this.bufferFrames){this.unbindBufferDocument(binding);frame.removeEventListener('load',binding.load);}this.bufferFrames.clear();this.observer.disconnect();if(this.timer)clearTimeout(this.timer);if(this.selectionTimer)clearTimeout(this.selectionTimer);document.removeEventListener('selectionchange',this.selectionListener);document.removeEventListener('mousedown',this.selectionListener);document.removeEventListener('mouseup',this.selectionListener);document.removeEventListener('keyup',this.selectionListener);}
+ dispose():void{this.disposed=true;for(const [frame,binding] of this.bufferFrames){this.unbindBufferDocument(binding);frame.removeEventListener('load',binding.load);}this.bufferFrames.clear();this.selectionContent=null;this.observer.disconnect();window.removeEventListener('resize',this.invalidateLayout);document.removeEventListener('load',this.invalidateLayout,true);if(this.timer)clearTimeout(this.timer);if(this.selectionTimer)clearTimeout(this.selectionTimer);document.removeEventListener('selectionchange',this.selectionListener);document.removeEventListener('mousedown',this.selectionListener);document.removeEventListener('mouseup',this.selectionListener);document.removeEventListener('keyup',this.selectionListener);}
 }

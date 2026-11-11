@@ -3,7 +3,7 @@ import {PhotoAiControls} from './PhotoAiControls';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CalendarClock, Type, BookOpen, Image, WrapText, Settings as SettingsIcon, Plus, Search, ArrowUpRight, Link2, Check, RefreshCw, Undo2, ChevronDown, ChevronRight, Upload, Download, Quote, AlignLeft, AlignCenter, AlignRight, Bold, FileJson, Keyboard, ShieldCheck, ExternalLink, ArrowDown, LayoutPanelLeft, CheckCircle2, X } from 'lucide-react';
 import type { Database, Snapshot, TabName, Preset, EditorRequest, EditorResponse, BreakPlan, Post, Backup, QuoteStyle } from '../core/types';
-import { loadDatabase, saveDatabase, saveBlogAddress, isExtension } from '../platform/storage';
+import { loadDatabase, saveDatabase, saveBlogAddress, isExtension, STORAGE_KEY } from '../platform/storage';
 import { editorRequest, capturePost, fetchPost, openShortcuts, openExtensionManager } from '../platform/bridge';
 import { demoEditor, demoPosts } from '../platform/demo';
 import { extractedKeywords } from '../core/search';
@@ -32,7 +32,9 @@ const privacyUrl=()=>isExtension()?chrome.runtime.getURL('privacy.html'):'/priva
 const errorText=(e:unknown)=>e instanceof Error?e.message:String(e);
 const download=(name:string,data:unknown)=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 export function App(){
- const [db,setDb]=useState<Database|null>(null),[liveSnapshot,setSnapshot]=useState<Snapshot|null>(null),[tab,setTab]=useState<TabName>('format');
+ const [db,setDb]=useState<Database|null>(null),[liveSnapshot,setLiveSnapshot]=useState<Snapshot|null>(null),[tab,setTab]=useState<TabName>('format');
+ const documentEpoch=useRef(0),documentSession=useRef<string|null>(null),confirmedVersion=useRef(0);
+ const setSnapshot=useCallback((value:Snapshot|null)=>{const session=value?.sessionId??null;if(session!==documentSession.current){documentSession.current=session;documentEpoch.current++;}setLiveSnapshot(value);},[]);
  const [recoveryLock,setRecoveryLock]=useState<{sessionId?:string;message:string}|null>(null),[showRecovery,setShowRecovery]=useState(false),[checkingConnection,setCheckingConnection]=useState(false);
  const snapshot=useMemo(()=>recoveryLock&&(!liveSnapshot||recoveryLock.sessionId===liveSnapshot.sessionId)?liveSnapshot?{...liveSnapshot,issue:liveSnapshot.issue??recoveryLock.message}:null:liveSnapshot,[liveSnapshot,recoveryLock]);
  useEffect(()=>{if(liveSnapshot&&recoveryLock&&liveSnapshot.sessionId!==recoveryLock.sessionId)setRecoveryLock(null);},[liveSnapshot?.sessionId,recoveryLock]);
@@ -42,7 +44,8 @@ export function App(){
  const [plan,setPlan]=useState<BreakPlan|null>(null),[selectedChanges,setSelectedChanges]=useState<Set<string>>(new Set()),[pendingBackup,setPendingBackup]=useState<Backup|null>(null),[replaceSettings,setReplaceSettings]=useState(false);
  const fileInput=useRef<HTMLInputElement>(null),saveQueue=useRef<Promise<void>>(Promise.resolve());
  const latestSnapshot=useRef(snapshot);latestSnapshot.current=snapshot;
- const snapshotSerial=useRef(0);
+ const snapshotSerial=useRef(0),saveSerial=useRef(0),pendingSaves=useRef(0);
+ const latestDb=useRef(db);latestDb.current=db;
  const panelBody=useRef<HTMLDivElement>(null);
  useLayoutEffect(()=>{if(panelBody.current)panelBody.current.scrollTop=0;},[tab]);
  useEffect(()=>{if(snapshot?.issue||recoveryLock)panelBody.current?.scrollTo?.({top:0});},[snapshot?.issue,recoveryLock]);
@@ -58,30 +61,47 @@ export function App(){
  useEffect(()=>{if(!toast)return;const timer=setTimeout(()=>setToast(null),6000);return()=>clearTimeout(timer);},[toast]);
  useEffect(()=>{
   if(demo)return;
-  let refreshTimer:ReturnType<typeof setTimeout>;
-  let active=true;
-  const shortcutResult=(response?:EditorResponse)=>{
-    clearTimeout(refreshTimer);snapshotSerial.current++;
+  let refreshTimer:ReturnType<typeof setTimeout>|undefined;
+  let active=true,refreshRunning=false,refreshAgain=false;
+  const scheduleRefresh=()=>{if(refreshRunning){refreshAgain=true;return;}if(refreshTimer===undefined)refreshTimer=setTimeout(()=>void runRefresh(),80);};
+  const runRefresh=async()=>{if(!active)return;if(refreshRunning){refreshAgain=true;return;}clearTimeout(refreshTimer);refreshTimer=undefined;refreshRunning=true;try{await refresh();}finally{refreshRunning=false;if(active&&refreshAgain){refreshAgain=false;scheduleRefresh();}}};
+  const shortcutResult=(response:EditorResponse|undefined,serial:number)=>{
+    if(serial!==snapshotSerial.current)return;
+    clearTimeout(refreshTimer);refreshTimer=undefined;refreshAgain=false;
     notify(response?.ok?'단축키로 서식을 적용했어요.':response?.error??'단축키를 실행하지 못했어요.',!response?.ok);
-    if(response?.ok){setSnapshot(response.snapshot);setConnection('');}
-    else {if(response?.recoveryRequired)setRecoveryLock({sessionId:latestSnapshot.current?.sessionId,message:response.error});void refresh();}
+    if(response?.ok){confirmedVersion.current++;setSnapshot(response.snapshot);setConnection('');}
+    else {if(response?.recoveryRequired)confirmedVersion.current++;if(response?.recoveryRequired)setRecoveryLock({sessionId:latestSnapshot.current?.sessionId,message:response.error});void refresh();}
   };
   const listener=(message:{type:string;response?:EditorResponse;windowId?:number})=>{
-   if(message.type==='PANEL_REFRESH'){clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>void refresh(),500);}
+   if(message.type==='PANEL_REFRESH')scheduleRefresh();
    if(message.type==='SHORTCUT_RESULT'){
-    if(message.windowId===undefined)shortcutResult(message.response);
-    else void chrome.windows.getCurrent().then(window=>{if(active&&window.id===message.windowId)shortcutResult(message.response);}).catch(()=>{});
+    // Reserve ordering before the asynchronous window lookup.
+    const serial=++snapshotSerial.current;clearTimeout(refreshTimer);refreshTimer=undefined;refreshAgain=false;
+    if(message.windowId===undefined)shortcutResult(message.response,serial);
+    else void chrome.windows.getCurrent().then(window=>{if(active&&window.id===message.windowId)shortcutResult(message.response,serial);}).catch(()=>{});
    }
   };
-  const stored=()=>{void loadDatabase().then(setDb).catch(e=>notify(errorText(e),true));};
+  const stored=(changes?:Record<string,unknown>,area?:string)=>{if(area&&area!=='local'||changes&&!(STORAGE_KEY in changes))return;const serial=saveSerial.current;void loadDatabase().then(value=>{if(!pendingSaves.current&&serial===saveSerial.current){latestDb.current=value;setDb(value);}}).catch(e=>notify(errorText(e),true));};
   chrome.runtime.onMessage.addListener(listener);chrome.storage.onChanged.addListener(stored);
-  const interval=setInterval(()=>void refresh(),5000);
+  const interval=setInterval(()=>void runRefresh(),5000);
   return()=>{active=false;clearTimeout(refreshTimer);clearInterval(interval);chrome.runtime.onMessage.removeListener(listener);chrome.storage.onChanged.removeListener(stored);};
  },[demo,refresh,notify]);
  useEffect(()=>{if(!snapshot)return;if(!snapshot.blocks.some(b=>b.id===photoId))setPhotoId(snapshot.blocks.find(b=>b.kind==='photo')?.id??'');if(!snapshot.blocks.some(b=>b.id===targetId)){const id=(snapshot.blocks.some(b=>b.id===snapshot.selection?.blockId&&['paragraph','heading'].includes(b.kind))?snapshot.selection?.blockId:undefined)??snapshot.blocks.find(b=>['paragraph','heading'].includes(b.kind))?.id??'';setTargetId(id);const g=groupBlocks(snapshot.blocks).find(group=>group.blocks.some(b=>b.id===id));if(g)setExpanded(new Set([g.id]));}},[snapshot,photoId,targetId]);
 
- const save=useCallback((update:(current:Database)=>Database)=>{const task=saveQueue.current.catch(()=>{}).then(async()=>{try{const current=await loadDatabase(),next=update(structuredClone(current));await saveDatabase(next,current);setDb(await loadDatabase());}catch(e){notify(errorText(e),true);throw e;}});saveQueue.current=task;return task;},[notify]);
- const execute=useCallback(async(request:EditorRequest,success:string)=>{const before=latestSnapshot.current;snapshotSerial.current++;setBusy(true);try{const r=await editorRequest(request);if(!r.ok){if(r.recoveryRequired)setRecoveryLock({sessionId:before?.sessionId,message:r.error});throw new Error(r.error);}if(request.type==='photo-move'&&before){const target=movedPhotoTarget(before,r.snapshot,request.targetId);if(target){setTargetId(target);setExpanded(new Set(groupBlocks(r.snapshot.blocks).filter(group=>group.blocks.some(block=>block.id===target)).map(group=>group.id)));}}snapshotSerial.current++;setSnapshot(r.snapshot);setConnection('');if(request.type==='focus'&&!isExtension())document.querySelector<HTMLElement>('[data-demo-block="'+CSS.escape(request.blockId)+'"]')?.scrollIntoView({block:'center',behavior:'smooth'});notify(r.unchanged?request.type==='photo-ai-on'?'모든 사진의 AI 활용 설정이 이미 켜져 있어요.':request.type==='photo-move'?'사진이 이미 지정한 위치에 있어요.':'선택 영역에 이미 같은 서식이 적용되어 있어요.':success);return true;}catch(e){notify(errorText(e),true);await refresh();return false;}finally{setBusy(false);}},[notify,refresh]);
+ const save=useCallback((update:(current:Database)=>Database)=>{
+  // Show each intent immediately; only the newest persistence response can
+  // replace it. The serialized write still starts from fresh stored data.
+  let optimistic:Database|undefined;
+  try{if(latestDb.current)optimistic=update(structuredClone(latestDb.current));}catch(e){return Promise.reject(e);}
+  const serial=++saveSerial.current;pendingSaves.current++;
+  if(optimistic){latestDb.current=optimistic;setDb(optimistic);}
+  const task=saveQueue.current.catch(()=>{}).then(async()=>{
+   try{const current=await loadDatabase(),next=update(structuredClone(current));await saveDatabase(next,current);const stored=await loadDatabase();if(serial===saveSerial.current){latestDb.current=stored;setDb(stored);}}
+   catch(e){notify(errorText(e),true);if(serial===saveSerial.current)try{const stored=await loadDatabase();latestDb.current=stored;setDb(stored);}catch{}throw e;}
+   finally{pendingSaves.current--;}
+  });saveQueue.current=task;return task;
+ },[notify]);
+ const execute=useCallback(async(request:EditorRequest,success:string)=>{const before=latestSnapshot.current,epoch=documentEpoch.current,confirmed=confirmedVersion.current;snapshotSerial.current++;setBusy(true);try{const r=await editorRequest(request);if(epoch!==documentEpoch.current||confirmed!==confirmedVersion.current)return r.ok;if(!r.ok){if(r.recoveryRequired)setRecoveryLock({sessionId:before?.sessionId,message:r.error});throw new Error(r.error);}if(request.type==='photo-move'&&before){const target=movedPhotoTarget(before,r.snapshot,request.targetId);if(target){setTargetId(target);setExpanded(new Set(groupBlocks(r.snapshot.blocks).filter(group=>group.blocks.some(block=>block.id===target)).map(group=>group.id)));}}snapshotSerial.current++;confirmedVersion.current++;setSnapshot(r.snapshot);setConnection('');if(request.type==='focus'&&!isExtension())document.querySelector<HTMLElement>('[data-demo-block="'+CSS.escape(request.blockId)+'"]')?.scrollIntoView({block:'center',behavior:'smooth'});notify(r.unchanged?request.type==='photo-ai-on'?'모든 사진의 AI 활용 설정이 이미 켜져 있어요.':request.type==='photo-move'?'사진이 이미 지정한 위치에 있어요.':'선택 영역에 이미 같은 서식이 적용되어 있어요.':success);return true;}catch(e){notify(errorText(e),true);await refresh();return false;}finally{setBusy(false);}},[notify,refresh]);
  const selectedPreset=db?.presets.find(p=>p.id===presetId)??db?.presets[0];
  let displaySelection=snapshot?.selection;
  if(tab==='format'&&selectedPreset?.format.paragraphStyle==='quote'&&snapshot){try{displaySelection=quoteTarget(snapshot);}catch{displaySelection=null;}}
@@ -150,7 +170,7 @@ export function App(){
    <div hidden={tab!=='schedule'}><SchedulePanel onReconnect={demo?undefined:()=>void openExtensionManager().catch(e=>notify(errorText(e),true))} snapshot={snapshot} preferences={db.settings.schedule} busy={busy} demo={demo} onApply={execute} onSave={schedule=>save(current=>({...current,settings:{...current.settings,schedule:{...(current.settings.schedule??DEFAULT_SCHEDULE),...schedule}}}))}/></div>
    {tab==='breaks'&&<>
     <h2>모바일 줄바꿈</h2><p className="subline">문구를 고치지 않고 읽기 좋은 간격으로 정리해요.</p>
-    <RulesEditor rules={db.settings.rules} canReflow={demo} onChange={patch=>void save(current=>({...current,settings:{...current.settings,rules:{...current.settings.rules,...patch}}})).catch(()=>{})}/>
+    <RulesEditor rules={db.settings.rules} canReflow={demo} onChange={patch=>save(current=>({...current,settings:{...current.settings,rules:{...current.settings.rules,...patch}}}))}/>
     <div className="excluded"><h4>자동 제외</h4><div className="keyword-chips">{['소제목','사진 · 캡션','표 · 목록','인용구 · 코드','링크 카드'].map(text=><span key={text}>{text}</span>)}</div></div>
     <BreakExample rules={db.settings.rules}/>
    </>}
@@ -181,7 +201,7 @@ function SettingsDialog({db,snapshot,onClose,save,notify,onImport,backup,replace
  return <Modal title="설정" wide onClose={onClose}><div className="settings-layout"><nav className="settings-nav">{([{key:'blog',name:'내 블로그',icon:BookOpen},{key:'shortcuts',name:'프리셋 단축키',icon:Keyboard},{key:'rules',name:'줄바꿈 규칙',icon:WrapText},{key:'backup',name:'백업',icon:FileJson}] as const).map(item=><button key={item.key} className={page===item.key?'active':''} onClick={()=>setPage(item.key)}><item.icon size={17}/>{item.name}</button>)}</nav><div className="settings-content">
  {page==='blog'&&<BlogSettings savedUrl={db.settings.blogUrl} postCount={db.posts.filter(p=>!db.settings.blogUrl||p.blogId===db.settings.blogUrl.split('/').at(-1)).length} connected={!!snapshot?.editable} onSave={input=>saveBlogAddress(input,save)}/> }
  {page==='shortcuts'&&<><h3>프리셋 단축키</h3><p>단축키마다 실행할 프리셋을 연결하세요.</p><ShortcutPresets presets={db.presets} bindings={db.settings.shortcutPresets} onChange={(slot,presetId)=>void save(current=>({...current,settings:{...current.settings,shortcutPresets:{...current.settings.shortcutPresets,[slot]:presetId}}})).catch(()=>{})}/><button className="outline-green" onClick={()=>void openShortcuts().catch(e=>notify(errorText(e),true))}><Keyboard size={16}/>크롬에서 키 조합 지정<ExternalLink size={14}/></button><Notice>본문에서 글자를 선택하고 지정한 단축키를 누르세요. 인용구 프리셋은 클릭한 문단 또는 드래그한 문단 전체에 적용해요.</Notice></>}
- {page==='rules'&&<><h3>기본 줄바꿈 규칙</h3><RulesEditor rules={db.settings.rules} canReflow={!isExtension()} onChange={patch=>void save(current=>({...current,settings:{...current.settings,rules:{...current.settings.rules,...patch}}})).catch(()=>{})}/><Notice>소제목·인용구·사진·표 등은 정리에서 제외해요.</Notice></>}
+ {page==='rules'&&<><h3>기본 줄바꿈 규칙</h3><RulesEditor rules={db.settings.rules} canReflow={!isExtension()} onChange={patch=>save(current=>({...current,settings:{...current.settings,rules:{...current.settings.rules,...patch}}}))}/><Notice>소제목·인용구·사진·표 등은 정리에서 제외해요.</Notice></>}
  {page==='backup'&&<><h3>백업 내보내기</h3><p>설정과 내 글 자료를 JSON 파일로 저장해요.</p><div className="backup-checkboxes">{([{key:'presets',label:'서식 프리셋'},{key:'rules',label:'설정 · 줄바꿈 · 예약 시간'},{key:'posts',label:'내 글 자료'}] as const).map(item=><label key={item.key}><input type="checkbox" checked={include[item.key]} onChange={e=>setInclude({...include,[item.key]:e.target.checked})}/>{item.label}</label>)}</div><button className="primary" disabled={!Object.values(include).some(Boolean)} onClick={()=>download('geulbugi-backup-'+new Date().toISOString().slice(0,10)+'.json',exportBackup(db,include))}><Download size={16}/>백업 파일 내보내기</button><hr/><h3>백업 가져오기</h3><button className="file-picker" onClick={onImport}><FileJson size={25}/><b>백업 파일 선택</b><span>JSON · 최대 20MB</span></button>{backup&&<div className="import-preview"><div className="section-title"><h4>가져오기 미리보기</h4><button className="icon-btn" aria-label="백업 미리보기 취소" onClick={clearBackup}><X size={16}/></button></div><div className="import-counts"><span>프리셋<strong>{backup.presets?.length??0}개</strong></span><span>설정<strong>{backup.settings?1:0}세트</strong></span><span>게시글<strong>{backup.posts?.length??0}개</strong></span></div><label><input type="radio" checked={!replaceSettings} onChange={()=>setReplaceSettings(false)}/>기존 설정 유지 · 새 프리셋만 추가</label><label><input type="radio" checked={replaceSettings} onChange={()=>setReplaceSettings(true)}/>가져온 설정과 프리셋으로 바꾸기</label><p className="helper">같은 게시글은 마지막 수집 시각을 비교해 갱신해요.</p><button className="primary full" onClick={async()=>{try{await save(current=>importBackup(current,backup,replaceSettings));clearBackup();notify('선택한 백업 자료를 가져왔어요.');}catch(e){notify(errorText(e),true);}}}>선택한 자료 가져오기</button></div>}<p className="helper"><ShieldCheck size={14}/>비밀번호·쿠키·세션 정보는 백업에 포함하지 않아요.</p></>}
  </div></div><footer className="modal-footer"><small>설정은 이 PC에 자동 저장돼요. <a href={privacyUrl()} target="_blank" rel="noopener noreferrer">개인정보처리방침</a></small><button className="secondary" onClick={onClose}>닫기</button></footer></Modal>;
 }

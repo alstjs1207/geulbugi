@@ -40,7 +40,8 @@ it.each([20,130])('completes verified formatting when the author clicks the body
  const undo=vi.spyOn(PublicEditorUI.prototype,'undo'),before=adapter.reader.read(),pending=adapter.handle({type:'format',preset});
  await vi.advanceTimersByTimeAsync(delay);const targetId=moveCursor(add);
  await vi.advanceTimersByTimeAsync(400);
- expect(await pending).toMatchObject({ok:true,snapshot:{canUndo:true,selection:{blockId:targetId,start:3,end:3,collapsed:true}}});
+ expect(await pending).toMatchObject({ok:true,snapshot:{canUndo:true}});
+ expect(await adapter.snapshot()).toMatchObject({selection:{blockId:targetId,start:3,end:3,collapsed:true}});
  expect((await adapter.snapshot()).issue).toBeUndefined();expect(span().style.fontWeight).toBe('700');expect(clicks).toHaveBeenCalledOnce();expect(undo).not.toHaveBeenCalled();
  vi.spyOn(PublicEditorUI.prototype,'undo').mockImplementation(async()=>{span().style.fontWeight='';return true;});
  const reverting=adapter.handle({type:'undo'});await vi.advanceTimersByTimeAsync(400);

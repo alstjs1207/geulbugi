@@ -1,7 +1,15 @@
+import {useEffect,useRef,useState} from 'react';
 import type {BreakRules} from '../core/types';
 
-export function RulesEditor({rules,onChange,canReflow=true}:{rules:BreakRules;onChange:(patch:Partial<BreakRules>)=>void;canReflow?:boolean}){
- const patch=(value:Partial<BreakRules>)=>onChange(value);
+export function RulesEditor({rules:savedRules,onChange,canReflow=true}:{rules:BreakRules;onChange:(patch:Partial<BreakRules>)=>unknown;canReflow?:boolean}){
+ const [rules,setRules]=useState(savedRules),latest=useRef(savedRules),saved=useRef(savedRules),intent=useRef(0);
+ saved.current=savedRules;
+ useEffect(()=>{latest.current=savedRules;setRules(savedRules);},[savedRules]);
+ const patch=(value:Partial<BreakRules>)=>{
+  const id=++intent.current;latest.current={...latest.current,...value};setRules(latest.current);
+  const rollback=()=>{if(id===intent.current){latest.current=saved.current;setRules(saved.current);}};
+  try{void Promise.resolve(onChange(value)).catch(rollback);}catch{rollback();}
+ };
  return <div className="rules-form">
   <div className="field-row"><label>적용 범위</label><div className="segmented"><button className={rules.scope==='selection'?'active':''} onClick={()=>patch({scope:'selection'})}>선택 영역</button><button className={rules.scope==='body'?'active':''} onClick={()=>patch({scope:'body',reflow:false,preserveExisting:true})}>일반 본문</button></div></div>
   <div className="field-row"><label>문장마다 나누기</label><div className="segmented">{([1,2] as const).map(n=><button key={n} className={rules.sentences===n?'active':''} onClick={()=>patch({sentences:n})}>{n}문장</button>)}</div></div>

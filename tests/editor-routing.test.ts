@@ -11,24 +11,32 @@ const supported={ok:true,snapshot:{...editorSnapshot,adapterSignature:'naver-one
 
 async function background(frames:{id:number;editable:boolean}[]){
  const values:Record<string,unknown>={};
- const onMessage=vi.fn(),query=vi.fn(async()=>[{id:10,url:'https://blog.naver.com/example_blog?Redirect=Write&'}]);
+ const onMessage=vi.fn(),notify=vi.fn(async()=>{}),query=vi.fn(async()=>[{id:10,url:'https://blog.naver.com/example_blog?Redirect=Write&'}]);
  const sendMessage=vi.fn(async(_tab:number,_message:{type:string;request:EditorRequest},_options?:{frameId:number})=>snapshot);
  vi.stubGlobal('chrome',{
-  runtime:{id:'test-extension',onInstalled:{addListener:vi.fn()},onMessage:{addListener:onMessage}},
+  runtime:{id:'test-extension',sendMessage:notify,onInstalled:{addListener:vi.fn()},onMessage:{addListener:onMessage}},
   tabs:{query,sendMessage,onRemoved:{addListener:vi.fn()}},
-  storage:{session:{get:vi.fn(async(key:string)=>({[key]:key.startsWith('frames:')?frames:values[key]})),set:vi.fn(async(next:Record<string,unknown>)=>{Object.assign(values,next);}),remove:vi.fn(async(key:string)=>{delete values[key];})}},
+  storage:{session:{get:vi.fn(async(key:string)=>({[key]:key in values?values[key]:key.startsWith('frames:')?frames:undefined})),set:vi.fn(async(next:Record<string,unknown>)=>{Object.assign(values,next);}),remove:vi.fn(async(key:string)=>{delete values[key];})}},
   sidePanel:{setPanelBehavior:vi.fn(async()=>{})},commands:{onCommand:{addListener:vi.fn()}}
  });
  await import('../src/background');
  const listener=onMessage.mock.calls[0][0] as (message:unknown,sender:unknown,reply:(response:EditorResponse)=>void)=>void;
  const request=(request:EditorRequest,windowId?:number)=>new Promise<EditorResponse>(resolve=>listener({type:'EDITOR_REQUEST',request,windowId},{},resolve));
- return {query,sendMessage,request};
+ const register=(id:number,editable:boolean)=>new Promise(resolve=>listener({type:'REGISTER_FRAME',editable},{tab:{id:10},frameId:id},resolve));
+ return {query,sendMessage,request,register,notify};
 }
 
 beforeEach(()=>vi.resetModules());
 afterEach(()=>vi.unstubAllGlobals());
 
 describe('routing after reopening an editor',()=>{
+ it('refreshes the panel after persisting a newly opened editor frame',async()=>{
+  const api=await background([]);
+  api.notify.mockImplementation(async()=>{expect((await api.request({type:'snapshot'},77)).ok).toBe(true);});
+  await api.register(3,true);
+  await vi.waitFor(()=>expect(api.sendMessage).toHaveBeenCalledWith(10,{type:'EDITOR',request:{type:'snapshot'}},{frameId:3}));
+  expect(api.notify).toHaveBeenCalledWith({type:'PANEL_REFRESH'});
+ });
  it('blocks photo AI mutations to an older content script before dispatch',async()=>{
   const api=await background([{id:1,editable:true}]);
   const result=await api.request({type:'photo-ai-on',expected:{sessionId:'test',documentKey:'draft',revision:'body'}},77);

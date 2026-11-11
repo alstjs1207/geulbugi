@@ -28,6 +28,24 @@ describe('native preview cards',()=>{
  });
 });
 describe('editor reader and fail-closed adapter',()=>{
+ it.each(['/example_blog/postwrite','/PostWriteForm.naver','/PostUpdateForm.naver'])('recognizes the native input-buffer canvas at %s without inline contenteditable',pathname=>{
+  vi.stubGlobal('location',{href:'https://blog.naver.com'+pathname,pathname});
+  document.body.innerHTML='<div class="se-canvas"><div class="se-components-wrap"><p class="se-text-paragraph">원문 보존</p></div></div><iframe id="input_buffer_test"></iframe>';
+  document.querySelector('iframe')!.contentDocument!.body.setAttribute('contenteditable','true');
+  const reader=new EditorReader();readers.push(reader);
+  expect(reader.read()).toMatchObject({editable:true,blocks:[{text:'원문 보존'}]});
+ });
+ it.each(['/example_blog/12345','/PostView.naver','/example_blog/postwrite-other'])('keeps the published viewer at %s read-only',pathname=>{
+  vi.stubGlobal('location',{href:'https://blog.naver.com'+pathname,pathname});
+  document.body.innerHTML='<div class="se-main-container"><p class="se-text-paragraph">공개 글</p></div>';
+  const reader=new EditorReader();readers.push(reader);
+  expect(reader.read().editable).toBe(false);
+ });
+ it('does not connect a postwrite route before its editor root exists',()=>{
+  vi.stubGlobal('location',{href:'https://blog.naver.com/example_blog/postwrite',pathname:'/example_blog/postwrite'});
+  document.body.innerHTML='<p>글쓰기 로딩 중</p>';
+  const reader=new EditorReader();readers.push(reader);expect(reader.read().editable).toBe(false);
+ });
  it('keeps title identity and revision stable when Naver normalizes pasted nonbreaking spaces on save',()=>{
   document.body.insertAdjacentHTML('afterbegin','<div class="se-documentTitle"><p class="se-text-paragraph">검수\u00a0초안</p></div>');
   const reader=new EditorReader();readers.push(reader);const before=reader.read();document.querySelector('.se-documentTitle p')!.textContent='검수 초안';

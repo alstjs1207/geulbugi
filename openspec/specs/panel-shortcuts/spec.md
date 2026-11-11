@@ -33,7 +33,39 @@
 - **WHEN** 사용자가 목록 아래로 스크롤한 뒤 다른 기능 탭을 선택한다
 - **THEN** 새 기능의 상단 안내와 조작부부터 표시한다
 
+### Requirement: PANEL-005 수신 순서와 편집 세션 보존
+패널은 비동기 창 확인이 늦은 단축키 결과와 이전 문서의 작업 응답으로 더 최신 문서/작업 상태를 덮어쓰지 않아야 한다(MUST).
+
+#### Scenario: 이전 문서의 성공 응답
+- **WHEN** A 문서 작업이 완료되기 전에 B 문서 연결을 확인하고 A 응답이 나중에 도착한다
+- **THEN** B의 선택·연결·되돌리기 상태를 유지한다
+
+#### Scenario: 단축키 창 확인의 순서 역전
+- **WHEN** 이전 단축키 결과의 창 확인이 최신 결과 또는 새 연결 조회보다 늦게 끝난다
+- **THEN** 이전 결과를 반영하지 않는다
+
+### Requirement: PANEL-006 연속 입력 중 선택 표시 갱신
+패널은 연속 입력 알림 때문에 선택 표시 갱신을 무기한 미루지 않아야 하며(SHALL), 단축키는 표시 갱신을 기다리지 않고 원래 입력 탭의 최신 설정·선택을 확인해야 한다(MUST).
+
+#### Scenario: 알림이 계속 도착하는 경우
+- **WHEN** 100ms 간격으로 편집 변경 알림이 계속 도착한다
+- **THEN** 마지막 알림 뒤 500ms가 되기를 기다리지 않고 제한된 주기로 새 상태를 조회하며 조회가 겹쳐 계속 증가하지 않는다
+
+### Requirement: PANEL-007 프로필 글쓰기 자동 연결
+시스템은 네이버 프로필의 글쓰기 버튼이 `mainFrame`에 여는 `/<blogId>/postwrite`의 실제 편집기 루트를 인식해야 하며(SHALL), 프레임 등록을 저장한 뒤 패널 갱신을 알려야 한다(MUST). 본문에 직접 `contenteditable`이 없어도 이 글쓰기 경로를 인식하며 공개 글 조회 화면과 편집기 루트가 없는 로딩 화면은 편집 가능으로 판정하지 않아야 한다(MUST).
+
+#### Scenario: 프로필 글쓰기로 진입
+- **WHEN** 프로필 글쓰기가 `/<blogId>/postwrite`를 열고 네이티브 입력 프레임을 사용하는 본문 캔버스가 준비된다
+- **THEN** 편집 가능한 프레임으로 등록하고 패널이 연결 상태를 자동 갱신한다
+
+#### Scenario: 공개 글 또는 로딩 화면
+- **WHEN** 공개 글의 읽기 전용 본문을 조회하거나 글쓰기 루트가 아직 생성되지 않았다
+- **THEN** URL 일부나 읽기 전용 본문만으로 편집 가능으로 판정하지 않는다
+
 ## Evidence
 - 구현: `src/background.ts`, `src/ui/App.tsx`, `src/ui/ShortcutPresets.tsx`, `src/editor/native-adapter.ts`.
 - 자동 검사: `tests/shortcut-routing.test.ts`, `tests/shortcut-connection.test.tsx`, `tests/shortcut-presets.test.tsx`, `tests/reliability-fixes.test.ts`.
 - PANEL-004는 소스 검토 근거다. 무시되는 로컬 `artifacts/`의 과거 브라우저 기록을 재현 가능한 필수 테스트로 사용하지 않는다.
+
+- 2026-11-10 로컬 수정본 검증: `tests/fast-editing-state.test.tsx`, `tests/fast-format-input.test.ts`, `tests/fast-settings-save.test.tsx`, `tests/selection-performance.test.ts`, `tests/panel-refresh-performance.test.tsx`. 공개 스토어 반영과 구분한다.
+- PANEL-007: `src/editor/reader.ts`, `src/background.ts`, `tests/reader.test.ts`, `tests/editor-routing.test.ts`, `docs/수정-프로필-글쓰기-자동연결-20261111.md`.

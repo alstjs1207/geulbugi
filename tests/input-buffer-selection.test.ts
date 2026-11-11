@@ -29,6 +29,27 @@ function nativeCaret(offset:number){
 }
 
 describe('observed SmartEditor input buffer selection',()=>{
+ it('retains exhaustive ambiguity checking for nonadjacent bidirectional caret boundaries',()=>{
+  document.querySelector('p')!.textContent='aאבc';document.body.insertAdjacentHTML('beforeend','<div class="se-selection"><div class="se-caret" style="left:10px;top:20px;height:15px"></div></div>');const block=reader.read().blocks[0],original=reader.rangeAt.bind(reader);
+  vi.spyOn(reader,'rangeAt').mockImplementation((id,at)=>{const range=original(id,at);range.getClientRects=()=>[{left:(at===3?1:at)*10,top:id===block.id?20:60,height:15}] as unknown as DOMRectList;return range;});
+  const point=reader.rangeAt(block.id,1);point.getClientRects=()=>[{left:10,top:20,height:15}] as unknown as DOMRectList;
+  Object.defineProperty(document,'caretRangeFromPoint',{configurable:true,value:vi.fn(()=>point)});
+  try{choose('',1,{collapsed:true});expect(reader.read().selection).toBeNull();}
+  finally{Reflect.deleteProperty(document,'caretRangeFromPoint');}
+ });
+ it.each(['match','mismatch','ambiguous'] as const)('requires unique native highlight geometry with a stale title anchor: %s',mode=>{
+  document.body.insertAdjacentHTML('afterbegin','<div class="se-documentTitle"><p class="se-text-paragraph">제목</p></div>');
+  document.body.insertAdjacentHTML('beforeend','<div class="se-selection se-is-block-selected"><svg class="se-selection-block"></svg></div>');
+  if(mode==='ambiguous')document.querySelector('.se-main-container [contenteditable]')!.insertAdjacentHTML('beforeend','<p class="se-text-paragraph">문장 <b>굵은 글자</b>링크</p>');
+  const rect={left:30,top:20,width:50,height:15,right:80,bottom:35,x:30,y:20,toJSON:()=>({})};
+  document.querySelector('.se-selection-block')!.getBoundingClientRect=()=>({...rect,left:mode==='mismatch'?300:30});
+  const original=reader.rangeAt.bind(reader);
+  vi.spyOn(reader,'rangeAt').mockImplementation((id,offset)=>{const range=original(id,offset);range.getClientRects=()=>[rect] as unknown as DOMRectList;return range;});
+  const title=document.createRange();title.selectNodeContents(document.querySelector('.se-documentTitle p')!);title.collapse(true);window.getSelection()!.removeAllRanges();window.getSelection()!.addRange(title);
+  doc.body.innerHTML='<span data-input-buffer="observed-native-buffer"></span>굵은 글자';const range=doc.createRange();range.selectNodeContents(doc.body.lastChild!);doc.defaultView!.getSelection()!.removeAllRanges();doc.defaultView!.getSelection()!.addRange(range);doc.dispatchEvent(new Event('selectionchange'));
+  if(mode==='match'){expect(reader.read().selection).toMatchObject({start:3,end:8,text:'굵은 글자',valid:true});expect(reader.restoreSelection(true).startContainer.ownerDocument).toBe(doc);}
+  else expect(reader.read().selection).toBeNull();
+ });
  it('moves from a selected card into a following empty paragraph without a text rectangle',async()=>{
   const paragraph=document.querySelectorAll('p')[1];paragraph.innerHTML='<span></span>';
   const block=reader.read().blocks[1],original=reader.rangeAt.bind(reader),keys=vi.fn();
